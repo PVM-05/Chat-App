@@ -4,17 +4,22 @@ const mongoose = require('mongoose');
 // 1. Định nghĩa Schema (Cái khuôn đúc)
 const UserSchema = new mongoose.Schema({
   username: { 
-    type: String,     // Phải là chữ
+    type: String,
+    minlength: 3,
+    maxlength: 30,    
     required: true,   // Bắt buộc phải điền
-    unique: true      // Không được trùng với người khác
   },
   email: { 
     type: String, 
+    minlength: 3,
+    maxlength: 200,  
     required: true, 
     unique: true 
   },
   password: { 
     type: String, 
+    minlength: 3,
+    maxlength: 1024,  
     required: true 
     // Lưu ý: Mật khẩu 6 ký tự vẫn là String
   },
