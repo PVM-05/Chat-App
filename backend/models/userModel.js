@@ -1,13 +1,12 @@
-// backend/models/User.js
+
 const mongoose = require('mongoose');
 
-// 1. Định nghĩa Schema (Cái khuôn đúc)
 const UserSchema = new mongoose.Schema({
   username: { 
     type: String,
     minlength: 3,
     maxlength: 30,    
-    required: true,   // Bắt buộc phải điền
+    required: true,   
   },
   email: { 
     type: String, 
@@ -21,15 +20,14 @@ const UserSchema = new mongoose.Schema({
     minlength: 3,
     maxlength: 1024,  
     required: true 
-    // Lưu ý: Mật khẩu 6 ký tự vẫn là String
+  
   },
   avatar: {
     type: String,
-    default: "" // Nếu không có ảnh thì để rỗng
+    default: ""
   },
 }, 
-{ timestamps: true } // Tự động tạo 2 cột: ngày tạo (createdAt) và ngày sửa (updatedAt)
+{ timestamps: true } 
 );
 
-// 2. Đóng gói thành Model và xuất ra
 module.exports = mongoose.model('User', UserSchema);
