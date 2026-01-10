@@ -35,6 +35,7 @@ const registerUser = async (req, res) => {
 
         const token = createToken(user._id);
         res.status(200).json({ _id: user._id, username, email, token });
+        
     } catch (error) {
         console.log(error);
         res.status(500).json(error);
@@ -61,5 +62,20 @@ const loginUser = async (req, res) => {
     };
 };
 
+const findUser = async (req, res) => {
+    const userId = req.params.userId;
+    try {
+        const user = await userModel.findById(userId);
+        res.status(200).json(user);
+        if (!user) {
+            return res.status(404).json("Không tìm thấy người dùng!");
+        }
+    }
+    catch(error) {
+        console.log(error);
+        res.status(500).json(error);
+    }
+}
 
-module.exports = { registerUser, loginUser };
+
+module.exports = { registerUser, loginUser, findUser };
