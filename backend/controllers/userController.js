@@ -23,7 +23,7 @@ const registerUser = async (req, res) => {
         //Kiểm tra định dạng email
         if(!validator.isEmail(email)) return res.status(400).json("Chưa đúng định dạng email");
         // 1 chữ cái thường 1 hoa 1 kí tự đặc biệt 1 số đủ 8 kí tự
-        if(!validator.isStrongPassword(password)) return res.status(400).json("Mật khẩu chưa đủ mạnh");
+        // if(!validator.isStrongPassword(password)) return res.status(400).json("Mật khẩu chưa đủ mạnh");
 
         //Mã hóa mật khẩu
         const salt = await bcrypt.genSalt(10);
