@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Chỉnh sửa thông tin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+<div class="bg-white p-6 rounded-xl shadow w-[360px]">
+  <h2 class="text-xl font-bold text-center mb-4">Thông tin cá nhân</h2>
+
+  <!-- Avatar vuông (nút thay đổi ảnh) -->
+  <div class="relative w-32 h-32 mx-auto mb-6 cursor-pointer">
+    <label for="profilePic">
+      <img id="preview" src="https://via.placeholder.com/128?text=User" alt="Ảnh đại diện" class="w-full h-full object-cover rounded-xl shadow-md">
+      <div class="absolute inset-0 bg-black bg-opacity-50 rounded-xl flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-200">
+        <span class="text-white text-sm font-medium">Thay đổi ảnh</span>
+      </div>
+    </label>
+    <input type="file" id="profilePic" class="hidden" accept="image/*">
+  </div>
+
+  <input id="username" class="w-full border p-2 rounded mb-3" placeholder="Tên hiển thị">
+  <input id="email" class="w-full border p-2 rounded mb-3" placeholder="Email">
+
+  <button onclick="saveProfile()"
+          class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
+    Lưu thay đổi
+  </button>
+
+  <button onclick="location.href='chat.html'"
+          class="w-full mt-2 text-gray-500 text-sm">
+    Quay lại chat
+  </button>
+</div>
+
+<script>
+// Preview ảnh khi chọn file
+document.getElementById('profilePic').addEventListener('change', function(event) {
+  if (event.target.files && event.target.files[0]) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      document.getElementById('preview').src = e.target.result;
+    }
+    reader.readAsDataURL(event.target.files[0]);
+  }
+});
+
+// Nếu bạn muốn saveProfile() xử lý file ảnh, thêm logic ở profile.js (ví dụ: FormData với file)
+function saveProfile() {
+  // Ví dụ: const file = document.getElementById('profilePic').files[0];
+  // Gửi lên server nếu cần
+  alert('Đã lưu thay đổi! (Thêm logic gửi file ở profile.js)');
+}
+</script>
+
+</body>
+</html>

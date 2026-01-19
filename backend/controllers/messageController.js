@@ -31,8 +31,7 @@ const sendMessage = async (req, res) => {
 
     res.json(message);
   } catch (error) {
-    res.status(400);
-    throw new Error(error.message);
+    res.status(400).json({ message: error.message });
   }
 };
 
@@ -44,9 +43,32 @@ const allMessages = async (req, res) => {
       .populate("chat");
     res.json(messages);
   } catch (error) {
-    res.status(400);
-    throw new Error(error.message);
+    res.status(400).json({ message: error.message });
   }
 };
 
-module.exports = { sendMessage, allMessages };
+const markAsSeen = async (req, res) => {
+  const { chatId } = req.body;
+
+  if (!chatId) {
+    return res.sendStatus(400);
+  }
+
+  try {
+    // Tìm tất cả tin nhắn trong chat này mà chưa có mình trong danh sách readBy
+    // Và thêm ID của mình vào mảng readBy
+    await Message.updateMany(
+      { 
+        chat: chatId,
+        sender: { $ne: req.user._id }  // Chỉ tin nhắn KHÔNG phải của mình
+      },
+      { $addToSet: { readBy: req.user._id } }
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+module.exports = { sendMessage, allMessages, markAsSeen };

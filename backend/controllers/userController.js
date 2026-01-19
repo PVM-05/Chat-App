@@ -47,7 +47,7 @@ const loginUser = async (req, res) => {
     try {
         if (!email || !password) return res.status(400).json("Vui lòng nhập email và mật khẩu");
 
-        let user = await userModel.findOne({ email }).select("+password");;
+        let user = await userModel.findOne({ email }).select("+password");
 
         if(!user) return res.status(400).json("Sai email hoặc mật khẩu");
 
@@ -66,10 +66,10 @@ const findUser = async (req, res) => {
     const userId = req.params.userId;
     try {
         const user = await userModel.findById(userId);
-        res.status(200).json(user);
         if (!user) {
-            return res.status(404).json("Không tìm thấy người dùng!");
+          return res.status(404).json("Không tìm thấy người dùng!");
         }
+        res.status(200).json(user);
     }
     catch(error) {
         console.log(error);
@@ -77,5 +77,49 @@ const findUser = async (req, res) => {
     }
 }
 
+const getMe = async (req, res) => {
+    try {
+        const user = await userModel
+            .findById(req.user._id)
+            .select("-password");
 
-module.exports = { registerUser, loginUser, findUser };
+        res.status(200).json(user);
+    } catch (err) {
+        res.status(500).json(err);
+    }
+};
+
+const updateProfile = async (req, res) => {
+    try {
+        const { username, email } = req.body;
+
+        if (!username && !email) {
+            return res.status(400).json("Không có dữ liệu cập nhật");
+        }
+
+        // kiểm tra email trùng
+        if (email) {
+            const exists = await userModel.findOne({ email });
+            if (exists && exists._id.toString() !== req.user._id.toString()) {
+                return res.status(400).json("Email đã được sử dụng");
+            }
+        }
+
+        const user = await userModel.findById(req.user._id);
+
+        if (username) user.username = username;
+        if (email) user.email = email;
+
+        await user.save();
+
+        res.status(200).json({
+            _id: user._id,
+            username: user.username,
+            email: user.email
+        });
+    } catch (err) {
+        res.status(500).json(err);
+    }
+};
+
+module.exports = { registerUser, loginUser, findUser, getMe, updateProfile };

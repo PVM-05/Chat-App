@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 const userRoute = require('./routes/userRoute');
 const chatRoute = require('./routes/chatRoute');
 const messageRoute = require('./routes/messageRoute');
+const onlineUsers = new Set();
 
 const app = express();
 require('dotenv').config();
@@ -42,8 +43,18 @@ io.on("connection", (socket) => {
 
   // Setup user
   socket.on("setup", (userData) => {
+    socket.userId = userData._id;
     socket.join(userData._id);
+    onlineUsers.add(userData._id);
+    socket.broadcast.emit("user online", userData._id);
     socket.emit("connected");
+  });
+
+  socket.on("disconnect", () => {
+    if (socket.userId) {
+      onlineUsers.delete(socket.userId);
+      socket.broadcast.emit("user offline", socket.userId);
+    }
   });
 
   // Join phòng chat
@@ -51,6 +62,7 @@ io.on("connection", (socket) => {
     socket.join(room);
     console.log("User đã vào phòng: " + room);
   });
+  socket.on("leave chat", (room) => socket.leave(room));
 
   // Gửi tin nhắn mới
   socket.on("new message", (newMessageRecieved) => {
@@ -60,6 +72,12 @@ io.on("connection", (socket) => {
     chat.users.forEach((user) => {
       if (user._id == newMessageRecieved.sender._id) return; // Không gửi lại cho chính mình
       socket.in(user._id).emit("message received", newMessageRecieved);
+      // Emit thông tin chat đã cập nhật để frontend cập nhật sidebar
+      socket.in(user._id).emit("chat updated", {
+        chatId: chat._id,
+        latestMessage: newMessageRecieved,
+        updatedAt: newMessageRecieved.createdAt
+      });
     });
   });
 });

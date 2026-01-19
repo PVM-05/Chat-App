@@ -20,12 +20,12 @@ const protect = async (req, res, next) => {
 
       next(); // Cho phép đi tiếp
     } catch (error) {
-      res.status(401).json("Lỗi xác minh Token");
+      return res.status(401).json("Lỗi xác minh Token");
     }
   }
 
   if (!token) {
-    res.status(401).json("Không tìm thấy token");
+    return res.status(401).json("Không tìm thấy token");
   }
 };
 

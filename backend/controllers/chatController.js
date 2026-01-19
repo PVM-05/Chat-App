@@ -39,8 +39,7 @@ const accessChat = async (req, res) => {
       );
       res.status(200).send(FullChat);
     } catch (error) {
-      res.status(400);
-      throw new Error(error.message);
+      res.status(400).json({ message: error.message });
     }
   }
 };
@@ -61,9 +60,40 @@ const fetchChats = async (req, res) => {
         res.status(200).send(results);
       });
   } catch (error) {
-    res.status(400);
-    throw new Error(error.message);
+    res.status(400).json({ message: error.message });
   }
 };
 
-module.exports = { accessChat, fetchChats };
+const createGroupChat = async (req, res) => {
+    // Client phải gửi lên: { users: "[id1, id2]", name: "Tên nhóm" }
+    if (!req.body.users || !req.body.name) {
+      return res.status(400).send({ message: "Vui lòng điền tên nhóm và thêm thành viên" });
+    }
+  
+    var users = JSON.parse(req.body.users); // Chuyển chuỗi JSON thành mảng
+  
+    if (users.length < 2) {
+      return res.status(400).send("Nhóm cần ít nhất 2 thành viên (cộng thêm bạn là 3)");
+    }
+  
+    users.push(req.user._id); // Thêm chính người tạo (admin) vào nhóm
+  
+    try {
+      const groupChat = await Chat.create({
+        chatName: req.body.name,
+        users: users,
+        isGroupChat: true,
+        groupAdmin: req.user._id,
+      });
+  
+      const fullGroupChat = await Chat.findOne({ _id: groupChat._id })
+        .populate("users", "-password")
+        .populate("groupAdmin", "-password");
+  
+      res.status(200).json(fullGroupChat);
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  };
+
+module.exports = { accessChat, fetchChats, createGroupChat };
