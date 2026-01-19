@@ -4,6 +4,8 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const userRoute = require('./routes/userRoute');
+const chatRoute = require('./routes/chatRoute');
+const messageRoute = require('./routes/messageRoute');
 
 const app = express();
 require('dotenv').config()
@@ -15,6 +17,8 @@ const port = process.env.PORT || 3000;
 const uri = process.env.ATLAS_URI
 
 app.use('/api/users', userRoute);
+app.use('/api/chats', chatRoute);
+app.use('/api/messages', messageRoute);
 
 app.get("/", (req, res) => {
   res.send("Trang chu")
