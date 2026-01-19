@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Room</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="chat-container">
+        <div class="sidebar">
+            <div class="header">
+                <div class="user-info">
+                    <img src="https://via.placeholder.com/40" alt="Avatar" class="avatar">
+                    <span id="currentUsername">User</span>
+                </div>
+                <button onclick="logout()" class="logout-btn" title="Đăng xuất">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+            
+            <div class="search-box">
+                <input type="text" placeholder="Tìm kiếm người dùng...">
+                <button><i class="fas fa-search"></i></button>
+            </div>
+
+            <div class="chat-list" id="chatList">
+                <div class="chat-item active">
+                    <div class="avatar">A</div>
+                    <div class="chat-info">
+                        <h4>Nguyễn Văn A</h4>
+                        <p>Xin chào...</p>
+                    </div>
+                </div>
+                <div class="chat-item">
+                    <div class="avatar">B</div>
+                    <div class="chat-info">
+                        <h4>Trần Thị B</h4>
+                        <p>Bạn khỏe không?</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-area">
+            <div class="chat-header">
+                <h3>Nguyễn Văn A</h3>
+            </div>
+
+            <div class="messages" id="messageContainer">
+                <div class="message received">
+                    <p>Xin chào, mình là A đây!</p>
+                    <span class="time">10:00</span>
+                </div>
+                <div class="message sent">
+                    <p>Chào A, mình vừa đăng nhập xong.</p>
+                    <span class="time">10:02</span>
+                </div>
+            </div>
+
+            <div class="chat-input">
+                <input type="text" id="msgInput" placeholder="Nhập tin nhắn...">
+                <button id="sendBtn"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <script src="chat.js"></script>
+</body>
+</html>

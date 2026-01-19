@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Chat App API</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f4; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); width: 800px; display: flex; gap: 20px; }
+        .box { flex: 1; padding: 10px; }
+        .box:first-child { border-right: 1px solid #ddd; }
+        h2 { text-align: center; color: #333; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background-color: #218838; }
+        button.login-btn { background-color: #007bff; }
+        button.login-btn:hover { background-color: #0069d9; }
+        .result { margin-top: 15px; padding: 10px; background: #e9ecef; border-radius: 4px; font-size: 13px; word-break: break-all; min-height: 50px; }
+        .error { color: red; }
+        .success { color: green; }
+        label { font-weight: bold; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="box">
+        <h2>Đăng Ký</h2>
+        <label>Tên người dùng:</label>
+        <input type="text" id="reg-username" placeholder="Ví dụ: Nguyen Van A">
+        
+        <label>Email:</label>
+        <input type="email" id="reg-email" placeholder="email@example.com">
+        
+        <label>Mật khẩu:</label>
+        <input type="password" id="reg-password" placeholder="******">
+        
+        <button onclick="handleRegister()">Đăng Ký</button>
+        
+        <div id="reg-result" class="result">Kết quả sẽ hiện ở đây...</div>
+    </div>
+
+    <div class="box">
+        <h2>Đăng Nhập</h2>
+        <label>Email:</label>
+        <input type="email" id="login-email" placeholder="email@example.com">
+        
+        <label>Mật khẩu:</label>
+        <input type="password" id="login-password" placeholder="******">
+        
+        <button class="login-btn" onclick="handleLogin()">Đăng Nhập</button>
+        
+        <div id="login-result" class="result">Kết quả sẽ hiện ở đây...</div>
+        
+        <div style="margin-top: 20px;">
+            <b>Token của bạn:</b>
+            <textarea id="jwt-token" rows="3" style="width:100%" readonly></textarea>
+        </div>
+    </div>
+</div>
+
+<script>
+    // CẤU HÌNH: Đảm bảo cổng này trùng với PORT trong file .env của bạn (thường là 5000)
+    const BASE_URL = 'http://localhost:3000/api/users';
+
+    // Hàm xử lý Đăng Ký
+    async function handleRegister() {
+        const username = document.getElementById('reg-username').value;
+        const email = document.getElementById('reg-email').value;
+        const password = document.getElementById('reg-password').value;
+        const resultDiv = document.getElementById('reg-result');
+
+        resultDiv.innerHTML = "Đang xử lý...";
+        resultDiv.className = "result";
+
+        try {
+            const response = await fetch(`${BASE_URL}/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, email, password })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                resultDiv.innerHTML = `<span class="success">✅ Đăng ký thành công!<br>ID: ${data._id}</span>`;
+                // Tự động điền email sang bên đăng nhập cho tiện
+                document.getElementById('login-email').value = email;
+            } else {
+                resultDiv.innerHTML = `<span class="error">❌ Lỗi: ${JSON.stringify(data)}</span>`;
+            }
+        } catch (error) {
+            resultDiv.innerHTML = `<span class="error">❌ Lỗi kết nối Server! (Check xem server chạy chưa?)</span>`;
+            console.error(error);
+        }
+    }
+
+    // Hàm xử lý Đăng Nhập
+    async function handleLogin() {
+        const email = document.getElementById('login-email').value;
+        const password = document.getElementById('login-password').value;
+        const resultDiv = document.getElementById('login-result');
+        const tokenInput = document.getElementById('jwt-token');
+
+        resultDiv.innerHTML = "Đang xử lý...";
+        resultDiv.className = "result";
+        tokenInput.value = "";
+
+        try {
+            const response = await fetch(`${BASE_URL}/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                resultDiv.innerHTML = `<span class="success">✅ Đăng nhập thành công!<br>Xin chào: <b>${data.username}</b></span>`;
+                
+                // Lưu Token vào LocalStorage (giống như React sau này sẽ làm)
+                localStorage.setItem('userInfo', JSON.stringify(data));
+                
+                // Hiển thị Token
+                tokenInput.value = data.token;
+            } else {
+                resultDiv.innerHTML = `<span class="error">❌ Lỗi: ${JSON.stringify(data)}</span>`;
+            }
+        } catch (error) {
+            resultDiv.innerHTML = `<span class="error">❌ Lỗi kết nối Server!</span>`;
+            console.error(error);
+        }
+    }
+</script>
+
+</body>
+</html>
