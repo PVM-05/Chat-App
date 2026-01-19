@@ -1,4 +1,4 @@
-const BASE_URL = "http://localhost:3000/api/users";
+const BASE_URL = "http://localhost:5000/api/users";
 
 /* ========== ĐĂNG KÝ ========== */
 const registerForm = document.getElementById("registerForm");
@@ -61,7 +61,7 @@ if (loginForm) {
             localStorage.setItem("user", JSON.stringify(data));
 
             alert("Đăng nhập thành công!");
-            window.location.href = "chat.html";
+            console.log("User:", data);
 
         } catch (err) {
             console.error(err);

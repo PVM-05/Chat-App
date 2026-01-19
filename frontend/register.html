@@ -1,27 +1,60 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>Đăng ký</title>
-    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-<div class="container">
-    <h2>Đăng ký</h2>
 
-    <form id="registerForm">
-        <input type="text" id="username" placeholder="Tên người dùng" required>
-        <input type="email" id="registerEmail" placeholder="Email" required>
-        <input type="password" id="registerPassword" placeholder="Mật khẩu" required>
+    <span class="ocean-icon icon-1">🐳</span>
+    <span class="ocean-icon icon-2">🐠</span>
+    <span class="ocean-icon icon-3">🐚</span>
+    <span class="ocean-icon icon-4">🌊</span>
 
-        <button type="submit">Đăng ký</button>
-    </form>
+    <div class="container">
+        <div class="card">
+            <h2>🌊 Ocean Register</h2>
+            <p class="subtitle">Bắt đầu hành trình mới</p>
 
-    <p id="registerMessage"></p>
+            <form id="registerForm">
+                <div class="input-group">
+                    <label>Tên người dùng</label>
+                    <input id="username" type="text" required />
+                </div>
 
-    <p>Đã có tài khoản? <a href="index.html">Đăng nhập</a></p>
-</div>
+                <div class="input-group">
+                    <label>Email</label>
+                    <input id="registerEmail" type="email" required />
+                </div>
 
-<script src="auth.js"></script>
+                <div class="input-group">
+                    <label>Mật khẩu</label>
+                    <div class="password-box">
+                        <input id="registerPassword" type="password" required />
+                        <span class="toggle" onclick="togglePassword('registerPassword')">👁</span>
+                    </div>
+                </div>
+
+                <p id="registerMessage" class="message error"></p>
+
+                <button class="btn">Đăng ký</button>
+            </form>
+
+            <p class="switch">
+                Đã có tài khoản?
+                <a href="index.html">Đăng nhập</a>
+            </p>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script>
+        function togglePassword(id) {
+            const input = document.getElementById(id);
+            input.type = input.type === "password" ? "text" : "password";
+        }
+    </script>
 </body>
 </html>

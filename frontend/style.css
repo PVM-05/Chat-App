@@ -1,138 +1,145 @@
 * {
+    margin: 0;
+    padding: 0;
     box-sizing: border-box;
-    font-family: Arial, sans-serif;
+    font-family: "Segoe UI", sans-serif;
 }
 
+/* ===== BACKGROUND ===== */
 body {
-    background: #f2f2f2;
-    height: 100vh;
+    min-height: 100vh;
+    background: linear-gradient(180deg, #e6faff, #ccefff, #b3e5ff);
     display: flex;
     justify-content: center;
     align-items: center;
+    position: relative;
+    overflow: hidden;
 }
 
+/* ===== OCEAN ICONS ===== */
+.ocean-icon {
+    position: absolute;
+    font-size: 90px;
+    opacity: 0.35;              /* TĂNG để nhìn thấy */
+    z-index: 0;                 /* NẰM DƯỚI CARD */
+    user-select: none;
+}
+
+.icon-1 { top: 6%; left: 6%; }
+.icon-2 { top: 8%; right: 8%; }
+.icon-3 { bottom: 8%; left: 10%; }
+.icon-4 { bottom: 6%; right: 6%; }
+
+/* ===== CONTAINER ===== */
 .container {
-    background: white;
-    padding: 25px;
-    width: 350px;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 420px;
+    padding: 20px;
+    z-index: 1;                 /* CARD LUÔN TRÊN ICON */
 }
 
+/* ===== CARD ===== */
+.card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(8px);
+    border-radius: 20px;
+    padding: 32px;
+    box-shadow: 0 20px 40px rgba(0, 120, 180, 0.25);
+    color: #0f172a;
+}
+
+/* ===== TITLE ===== */
 h2 {
     text-align: center;
-    margin-bottom: 20px;
+    font-size: 26px;
+    margin-bottom: 6px;
+    color: #0369a1;
+}
+
+.subtitle {
+    text-align: center;
+    font-size: 14px;
+    color: #475569;
+    margin-bottom: 26px;
+}
+
+/* ===== INPUT ===== */
+.input-group {
+    margin-bottom: 18px;
+}
+
+label {
+    font-size: 13px;
+    color: #0369a1;
+    margin-bottom: 6px;
+    display: block;
 }
 
 input {
     width: 100%;
-    padding: 10px;
-    margin-bottom: 12px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+    padding: 14px;
+    border-radius: 12px;
+    border: 1px solid #bae6fd;
+    background: #f8fcff;
+    font-size: 14px;
+    color: #0f172a;
 }
 
-button {
-    width: 100%;
-    padding: 10px;
-    background: #007bff;
-    border: none;
-    color: white;
-    border-radius: 5px;
-    cursor: pointer;
+input:focus {
+    outline: none;
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 3px rgba(56,189,248,0.3);
 }
 
-button:hover {
-    background: #0056b3;
-}
-
-p {
-    text-align: center;
-    margin-top: 10px;
-    color: red;
-}
-
-a {
-    color: #007bff;
-    text-decoration: none;
-}
-
-.chat-container {
-    display: flex;
-    width: 90vw;
-    height: 90vh;
-    background: white;
-    box-shadow: 0 0 20px rgba(0,0,0,0.1);
-    border-radius: 10px;
-    overflow: hidden;
-}
-
-/* Sidebar bên trái */
-.sidebar {
-    width: 300px;
-    background: #f7f7f7;
-    border-right: 1px solid #ddd;
-    display: flex;
-    flex-direction: column;
-}
-
-.sidebar .header {
-    padding: 15px;
-    background: #007bff;
-    color: white;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.user-info { display: flex; align-items: center; gap: 10px; font-weight: bold; }
-.avatar { width: 40px; height: 40px; border-radius: 50%; background: #ddd; display: flex; align-items: center; justify-content: center; }
-
-.logout-btn { background: none; border: none; color: white; cursor: pointer; font-size: 1.2rem; width: auto; padding: 0;}
-
-.search-box { padding: 10px; display: flex; gap: 5px; border-bottom: 1px solid #ddd; }
-.chat-list { flex: 1; overflow-y: auto; }
-
-.chat-item {
-    padding: 15px;
-    display: flex;
-    gap: 10px;
-    cursor: pointer;
-    border-bottom: 1px solid #eee;
-}
-.chat-item:hover, .chat-item.active { background: #e9ecef; }
-.chat-info h4 { margin: 0; font-size: 1rem; }
-.chat-info p { margin: 5px 0 0; font-size: 0.8rem; color: #666; }
-
-/* Khu vực Chat bên phải */
-.chat-area { flex: 1; display: flex; flex-direction: column; }
-.chat-header { padding: 15px; border-bottom: 1px solid #ddd; background: white; font-weight: bold; }
-
-.messages {
-    flex: 1;
-    padding: 20px;
-    overflow-y: auto;
-    background: #f0f2f5;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.message {
-    max-width: 60%;
-    padding: 10px 15px;
-    border-radius: 20px;
-    font-size: 0.9rem;
+/* ===== PASSWORD ===== */
+.password-box {
     position: relative;
 }
 
-.message.received { align-self: flex-start; background: white; border: 1px solid #ddd; }
-.message.sent { align-self: flex-end; background: #007bff; color: white; }
+.toggle {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+}
 
-.chat-input {
-    padding: 15px;
-    border-top: 1px solid #ddd;
-    display: flex;
-    gap: 10px;
-    background: white;
+/* ===== BUTTON ===== */
+.btn {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #38bdf8, #22d3ee);
+    color: #083344;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn:hover {
+    box-shadow: 0 12px 25px rgba(2,132,199,0.35);
+}
+
+/* ===== MESSAGE ===== */
+.message {
+    margin-bottom: 12px;
+    font-size: 14px;
+}
+
+.error {
+    color: #dc2626;
+}
+
+/* ===== SWITCH ===== */
+.switch {
+    margin-top: 18px;
+    text-align: center;
+    font-size: 14px;
+}
+
+.switch a {
+    color: #0284c7;
+    text-decoration: none;
+    font-weight: 600;
 }

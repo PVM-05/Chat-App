@@ -1,26 +1,56 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>Đăng nhập</title>
-    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-<div class="container">
-    <h2>Đăng nhập</h2>
 
-    <form id="loginForm">
-        <input type="email" id="loginEmail" placeholder="Email" required>
-        <input type="password" id="loginPassword" placeholder="Mật khẩu" required>
+    <!-- ICON ĐẠI DƯƠNG -->
+    <span class="ocean-icon icon-1">🐳</span>
+    <span class="ocean-icon icon-2">🐠</span>
+    <span class="ocean-icon icon-3">🐚</span>
+    <span class="ocean-icon icon-4">🌊</span>
 
-        <button type="submit">Đăng nhập</button>
-    </form>
+    <div class="container">
+        <div class="card">
+            <h2>🌊 Ocean Login</h2>
+            <p class="subtitle">Chào mừng bạn quay lại</p>
 
-    <p id="loginMessage"></p>
+            <form id="loginForm">
+                <div class="input-group">
+                    <label>Email</label>
+                    <input id="loginEmail" type="email" required />
+                </div>
 
-    <p>Chưa có tài khoản? <a href="register.html">Đăng ký</a></p>
-</div>
+                <div class="input-group">
+                    <label>Mật khẩu</label>
+                    <div class="password-box">
+                        <input id="loginPassword" type="password" required />
+                        <span class="toggle" onclick="togglePassword('loginPassword')">👁</span>
+                    </div>
+                </div>
 
-<script src="auth.js"></script>
+                <p id="loginMessage" class="message error"></p>
+
+                <button class="btn">Đăng nhập</button>
+            </form>
+
+            <p class="switch">
+                Chưa có tài khoản?
+                <a href="register.html">Đăng ký</a>
+            </p>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script>
+        function togglePassword(id) {
+            const input = document.getElementById(id);
+            input.type = input.type === "password" ? "text" : "password";
+        }
+    </script>
 </body>
 </html>
