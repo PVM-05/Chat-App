@@ -22,10 +22,12 @@ const uri = process.env.ATLAS_URI;
 // Health Check Endpoint
 // ==========================================
 app.get('/health', (req, res) => {
+  const instanceName = process.env.INSTANCE_NAME || process.env.HOSTNAME || 'unknown';
   res.status(200).json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    instance: process.env.HOSTNAME || 'local'
+    instance: instanceName,
+    container: process.env.HOSTNAME
   });
 });
 
@@ -40,15 +42,15 @@ app.use('/api/messages', messageRoute);
 // Kết nối MongoDB
 // ==========================================
 mongoose.connect(uri)
-  .then(() => console.log("✅ Kết nối MongoDB thành công"))
-  .catch(err => console.error("❌ Lỗi kết nối MongoDB:", err.message));
+  .then(() => console.log(" Kết nối MongoDB thành công"))
+  .catch(err => console.error(" Lỗi kết nối MongoDB:", err.message));
 
 // ==========================================
 // Khởi tạo Server & Socket.IO
 // ==========================================
 const server = app.listen(port, () => {
-  console.log(`🚀 Server đang chạy tại cổng ${port}`);
-  console.log(`📦 Instance: ${process.env.HOSTNAME || 'local'}`);
+  console.log(` Server đang chạy tại cổng ${port}`);
+  console.log(` Instance: ${process.env.HOSTNAME || 'local'}`);
 });
 
 const io = require("socket.io")(server, {
@@ -68,7 +70,7 @@ async function setupRedisAdapter() {
     const redisPort = process.env.REDIS_PORT || 6379;
     const redisPassword = process.env.REDIS_PASSWORD;
 
-    console.log(`🔌 Đang kết nối tới Redis: ${redisHost}:${redisPort}`);
+    console.log(` Đang kết nối tới Redis: ${redisHost}:${redisPort}`);
 
     // Tạo 2 Redis clients: một cho publish, một cho subscribe
     const pubClient = createClient({
@@ -82,8 +84,8 @@ async function setupRedisAdapter() {
     const subClient = pubClient.duplicate();
 
     // Xử lý lỗi
-    pubClient.on('error', (err) => console.error('❌ Redis Pub Client Error:', err));
-    subClient.on('error', (err) => console.error('❌ Redis Sub Client Error:', err));
+    pubClient.on('error', (err) => console.error('Redis Pub Client lỗi:', err));
+    subClient.on('error', (err) => console.error('Redis Sub Client lỗi:', err));
 
     // Kết nối
     await Promise.all([
@@ -91,26 +93,26 @@ async function setupRedisAdapter() {
       subClient.connect()
     ]);
 
-    console.log('✅ Redis Adapter đã kết nối thành công');
+    console.log('Redis Adapter đã kết nối thành công');
 
     // Gắn adapter vào Socket.IO
     io.adapter(createAdapter(pubClient, subClient));
 
     // Lắng nghe sự kiện từ Redis để debug
     io.of("/").adapter.on("create-room", (room) => {
-      console.log(`📦 Room created: ${room}`);
+      console.log(` Tạo phòng: ${room}`);
     });
 
     io.of("/").adapter.on("join-room", (room, id) => {
-      console.log(`👤 Socket ${id} joined room ${room}`);
+      console.log(` Socket ${id} vào phòng ${room}`);
     });
 
     io.of("/").adapter.on("leave-room", (room, id) => {
-      console.log(`👋 Socket ${id} left room ${room}`);
+      console.log(`Socket ${id} rời phòng ${room}`);
     });
 
   } catch (error) {
-    console.error('❌ Lỗi khi thiết lập Redis Adapter:', error);
+    console.error('Lỗi khi thiết lập Redis Adapter:', error);
     process.exit(1);
   }
 }
@@ -122,15 +124,13 @@ setupRedisAdapter();
 // Socket.IO Event Handlers
 // ==========================================
 
-// ✅ SỬA LỖI: Lưu trữ online users với Map để tránh race condition
-// Key: userId, Value: Set of socketIds
 const onlineUsers = new Map();
 
 io.on("connection", (socket) => {
   console.log(`🔌 Socket.io connected: ${socket.id}`);
 
   // ==========================================
-  // Setup user - ✅ SỬA LỖI
+  // Setup user 
   // ==========================================
   socket.on("setup", async (userData) => {
     socket.userId = userData._id;
@@ -150,11 +150,11 @@ io.on("connection", (socket) => {
     
     socket.emit("connected");
     
-    console.log(`✅ User ${userData.username} (${userData._id}) connected - Total connections: ${onlineUsers.get(userData._id).size}`);
+    console.log(`User ${userData.username} (${userData._id}) đã kết nối - Tổng kết nối: ${onlineUsers.get(userData._id).size}`);
   });
 
   // ==========================================
-  // Disconnect - ✅ SỬA LỖI
+  // Disconnect
   // ==========================================
   socket.on("disconnect", async () => {
     if (socket.userId) {
@@ -167,9 +167,9 @@ io.on("connection", (socket) => {
         if (userSockets.size === 0) {
           onlineUsers.delete(socket.userId);
           socket.broadcast.emit("user offline", socket.userId);
-          console.log(`❌ User ${socket.userId} disconnected completely`);
+          console.log(` User ${socket.userId} đã ngắt kết nối`);
         } else {
-          console.log(`⚠️ User ${socket.userId} still has ${userSockets.size} connection(s)`);
+          console.log(` User ${socket.userId} vẫn có ${userSockets.size} kết nối`);
         }
       }
     }
@@ -198,15 +198,15 @@ io.on("connection", (socket) => {
     const chat = newMessageReceived.chat;
     
     if (!chat.users) {
-      return console.log("❌ chat.users không tồn tại");
+      return console.log(" chat.users không tồn tại");
     }
 
     console.log(`💬 New message in chat ${chat._id}`);
 
     chat.users.forEach((user) => {
-      if (user._id === newMessageReceived.sender._id) return;
+      if (String(user._id) === String(newMessageReceived.sender._id)) return;
       
-      socket.in(user._id).emit("message received", newMessageReceived);
+      socket.in(String(user._id)).emit("message received", newMessageReceived);
       
       socket.in(user._id).emit("chat updated", {
         chatId: chat._id,
@@ -234,9 +234,9 @@ io.on("connection", (socket) => {
 process.on('SIGTERM', () => {
   console.log('⚠️ SIGTERM signal received: closing HTTP server');
   server.close(() => {
-    console.log('✅ HTTP server closed');
+    console.log(' HTTP server closed');
     mongoose.connection.close(false, () => {
-      console.log('✅ MongoDB connection closed');
+      console.log(' MongoDB connection closed');
       process.exit(0);
     });
   });

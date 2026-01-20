@@ -1,14 +1,14 @@
-# 🚀 Hệ thống Chat Phân Tán với Redis & Docker
+#  Hệ thống Chat Phân Tán với Redis & Docker
 
-## 📋 Tổng quan
+##  Tổng quan
 
 Hệ thống chat real-time được thiết kế để scale horizontally với:
 
-- ✅ **3 Backend instances** chạy song song
-- ✅ **Redis Adapter** để đồng bộ Socket.IO
-- ✅ **Nginx Load Balancer** phân phối traffic
-- ✅ **MongoDB** lưu trữ dữ liệu
-- ✅ **Docker Compose** orchestration
+-  **3 Backend instances** chạy song song
+-  **Redis Adapter** để đồng bộ Socket.IO
+-  **Nginx Load Balancer** phân phối traffic
+-  **MongoDB** lưu trữ dữ liệu
+-  **Docker Compose** orchestration
 
 ## 🎯 Tính năng chính
 
@@ -31,7 +31,7 @@ Hệ thống chat real-time được thiết kế để scale horizontally với
 - [ ] Message search
 - [ ] Push notifications
 
-## 🏗️ Kiến trúc
+##  Kiến trúc
 
 ```
 ┌──────────┐
@@ -60,7 +60,7 @@ Hệ thống chat real-time được thiết kế để scale horizontally với
 └────────┘  └─────────┘
 ```
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### Cách 1: Sử dụng script tự động (Khuyến nghị)
 
@@ -93,7 +93,7 @@ docker-compose up -d
 docker-compose logs -f
 ```
 
-## 📦 Cấu trúc thư mục
+##  Cấu trúc thư mục
 
 ```
 .
@@ -133,7 +133,7 @@ docker-compose logs -f
 └── README.md
 ```
 
-## 🔧 Cấu hình
+##  Cấu hình
 
 ### Environment Variables (.env)
 
@@ -166,7 +166,7 @@ REDIS_PASSWORD=redis123
 | Redis         | 6379  | Redis server        |
 | MongoDB       | 27017 | MongoDB server      |
 
-## 🧪 Testing
+##  Testing
 
 ### 1. Test Load Balancing
 
@@ -200,7 +200,7 @@ docker-compose stop backend-1
 docker-compose start backend-1
 ```
 
-## 📊 Monitoring
+## 📊Monitoring
 
 ### Xem logs
 
@@ -264,7 +264,7 @@ db.users.countDocuments()
 db.messages.countDocuments()
 ```
 
-## 🔄 Scaling
+##  Scaling
 
 ### Scale up (Thêm instances)
 
