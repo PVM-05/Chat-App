@@ -1,4 +1,3 @@
-
 const userModel = require("../models/userModel"); 
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -55,7 +54,13 @@ const loginUser = async (req, res) => {
         if(!isValidPassword) return res.status(400).json("Sai email hoặc mật khẩu");
 
         const token = createToken(user._id);
-        res.status(200).json({ _id: user._id, username: user.username, email, token });
+        res.status(200).json({ 
+            _id: user._id, 
+            username: user.username, 
+            email, 
+            avatar: user.avatar, // ✅ THÊM: Trả về avatar
+            token 
+        });
     } catch(error) {
         console.log(error);
         res.status(500).json(error);
@@ -89,11 +94,12 @@ const getMe = async (req, res) => {
     }
 };
 
+// ✅ SỬA LỖI: Thêm xử lý avatar
 const updateProfile = async (req, res) => {
     try {
-        const { username, email } = req.body;
+        const { username, email, avatar } = req.body; // ✅ THÊM: avatar
 
-        if (!username && !email) {
+        if (!username && !email && !avatar) {
             return res.status(400).json("Không có dữ liệu cập nhật");
         }
 
@@ -105,19 +111,43 @@ const updateProfile = async (req, res) => {
             }
         }
 
+        // ✅ THÊM: Validate avatar (nếu là URL)
+        if (avatar) {
+            // Kiểm tra xem có phải URL hợp lệ không
+            if (!validator.isURL(avatar, { protocols: ['http', 'https'], require_protocol: true })) {
+                // Hoặc kiểm tra base64 image
+                const base64Regex = /^data:image\/(png|jpg|jpeg|gif|webp);base64,/;
+                if (!base64Regex.test(avatar)) {
+                    return res.status(400).json("Avatar không hợp lệ (phải là URL hoặc base64 image)");
+                }
+            }
+            
+            // ✅ THÊM: Giới hạn kích thước base64 (khoảng 5MB)
+            if (avatar.startsWith('data:image')) {
+                const sizeInBytes = (avatar.length * 3) / 4;
+                const maxSize = 5 * 1024 * 1024; // 5MB
+                if (sizeInBytes > maxSize) {
+                    return res.status(400).json("Ảnh quá lớn (tối đa 5MB)");
+                }
+            }
+        }
+
         const user = await userModel.findById(req.user._id);
 
         if (username) user.username = username;
         if (email) user.email = email;
+        if (avatar) user.avatar = avatar; // ✅ THÊM: Cập nhật avatar
 
         await user.save();
 
         res.status(200).json({
             _id: user._id,
             username: user.username,
-            email: user.email
+            email: user.email,
+            avatar: user.avatar // ✅ THÊM: Trả về avatar
         });
     } catch (err) {
+        console.error('Update profile error:', err);
         res.status(500).json(err);
     }
 };

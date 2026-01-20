@@ -1,191 +1,242 @@
-// ==========================
-// IMPORTS
-// ==========================
-require('dotenv').config();
 const express = require('express');
+const dotenv = require('dotenv');
 const cors = require('cors');
 const mongoose = require('mongoose');
-const jwt = require('jsonwebtoken');
-
 const { createClient } = require('redis');
 const { createAdapter } = require('@socket.io/redis-adapter');
-const { Server } = require('socket.io');
 
-// Routes
 const userRoute = require('./routes/userRoute');
 const chatRoute = require('./routes/chatRoute');
 const messageRoute = require('./routes/messageRoute');
 
-// ==========================
-// APP SETUP
-// ==========================
 const app = express();
+require('dotenv').config();
+
 app.use(express.json());
 app.use(cors());
 
-const PORT = process.env.PORT || 3000;
-const MONGO_URI = process.env.ATLAS_URI;
+const port = process.env.PORT || 3000;
+const uri = process.env.ATLAS_URI;
 
-// ==========================
-// HEALTH CHECK
-// ==========================
+// ==========================================
+// Health Check Endpoint
+// ==========================================
 app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'OK',
-    instance: process.env.HOSTNAME || 'local',
-    timestamp: new Date().toISOString()
+  res.status(200).json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    instance: process.env.HOSTNAME || 'local'
   });
 });
 
-// ==========================
-// ROUTES
-// ==========================
+// ==========================================
+// Routes
+// ==========================================
 app.use('/api/users', userRoute);
 app.use('/api/chats', chatRoute);
 app.use('/api/messages', messageRoute);
 
-// ==========================
-// DATABASE
-// ==========================
-mongoose.connect(MONGO_URI)
-  .then(() => console.log('✅ MongoDB connected'))
-  .catch(err => {
-    console.error('❌ MongoDB error:', err.message);
-    process.exit(1);
-  });
+// ==========================================
+// Kết nối MongoDB
+// ==========================================
+mongoose.connect(uri)
+  .then(() => console.log("✅ Kết nối MongoDB thành công"))
+  .catch(err => console.error("❌ Lỗi kết nối MongoDB:", err.message));
 
-// ==========================
-// SERVER
-// ==========================
-const server = app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+// ==========================================
+// Khởi tạo Server & Socket.IO
+// ==========================================
+const server = app.listen(port, () => {
+  console.log(`🚀 Server đang chạy tại cổng ${port}`);
   console.log(`📦 Instance: ${process.env.HOSTNAME || 'local'}`);
 });
 
-// ==========================
-// SOCKET.IO
-// ==========================
-const io = new Server(server, {
+const io = require("socket.io")(server, {
   pingTimeout: 60000,
   cors: {
-    origin: '*',
-    methods: ['GET', 'POST']
-  }
+    origin: "*",
+    methods: ["GET", "POST"]
+  },
 });
 
-// ==========================
-// SOCKET AUTH (JWT)
-// ==========================
-io.use((socket, next) => {
+// ==========================================
+// Cấu hình Redis Adapter
+// ==========================================
+async function setupRedisAdapter() {
   try {
-    const token = socket.handshake.auth?.token;
-    if (!token) return next(new Error('Unauthorized'));
+    const redisHost = process.env.REDIS_HOST || 'localhost';
+    const redisPort = process.env.REDIS_PORT || 6379;
+    const redisPassword = process.env.REDIS_PASSWORD;
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    socket.user = decoded;
-    next();
-  } catch (err) {
-    next(new Error('Invalid token'));
+    console.log(`🔌 Đang kết nối tới Redis: ${redisHost}:${redisPort}`);
+
+    // Tạo 2 Redis clients: một cho publish, một cho subscribe
+    const pubClient = createClient({
+      socket: {
+        host: redisHost,
+        port: redisPort,
+      },
+      password: redisPassword,
+    });
+
+    const subClient = pubClient.duplicate();
+
+    // Xử lý lỗi
+    pubClient.on('error', (err) => console.error('❌ Redis Pub Client Error:', err));
+    subClient.on('error', (err) => console.error('❌ Redis Sub Client Error:', err));
+
+    // Kết nối
+    await Promise.all([
+      pubClient.connect(),
+      subClient.connect()
+    ]);
+
+    console.log('✅ Redis Adapter đã kết nối thành công');
+
+    // Gắn adapter vào Socket.IO
+    io.adapter(createAdapter(pubClient, subClient));
+
+    // Lắng nghe sự kiện từ Redis để debug
+    io.of("/").adapter.on("create-room", (room) => {
+      console.log(`📦 Room created: ${room}`);
+    });
+
+    io.of("/").adapter.on("join-room", (room, id) => {
+      console.log(`👤 Socket ${id} joined room ${room}`);
+    });
+
+    io.of("/").adapter.on("leave-room", (room, id) => {
+      console.log(`👋 Socket ${id} left room ${room}`);
+    });
+
+  } catch (error) {
+    console.error('❌ Lỗi khi thiết lập Redis Adapter:', error);
+    process.exit(1);
   }
-});
-
-// ==========================
-// REDIS ADAPTER
-// ==========================
-async function setupRedis() {
-  const redisHost = process.env.REDIS_HOST || 'localhost';
-  const redisPort = process.env.REDIS_PORT || 6379;
-  const redisPassword = process.env.REDIS_PASSWORD;
-
-  console.log(`🔌 Connecting Redis ${redisHost}:${redisPort}`);
-
-  const pubClient = createClient({
-    socket: { host: redisHost, port: redisPort },
-    password: redisPassword
-  });
-
-  const subClient = pubClient.duplicate();
-
-  pubClient.on('error', err => console.error('❌ Redis Pub Error:', err));
-  subClient.on('error', err => console.error('❌ Redis Sub Error:', err));
-
-  await Promise.all([pubClient.connect(), subClient.connect()]);
-
-  io.adapter(createAdapter(pubClient, subClient));
-  console.log('✅ Redis Adapter ready');
 }
 
-setupRedis().catch(err => {
-  console.error('❌ Redis setup failed:', err);
-  process.exit(1);
-});
+// Khởi tạo Redis adapter
+setupRedisAdapter();
 
-// ==========================
-// SOCKET EVENTS
-// ==========================
-io.on('connection', (socket) => {
-  const userId = socket.user.id;
+// ==========================================
+// Socket.IO Event Handlers
+// ==========================================
 
-  console.log(`🔌 Socket connected: ${socket.id} | User: ${userId}`);
+// ✅ SỬA LỖI: Lưu trữ online users với Map để tránh race condition
+// Key: userId, Value: Set of socketIds
+const onlineUsers = new Map();
 
-  // Join personal room
-  socket.join(userId);
-  socket.broadcast.emit('user online', userId);
+io.on("connection", (socket) => {
+  console.log(`🔌 Socket.io connected: ${socket.id}`);
 
-  socket.emit('connected');
+  // ==========================================
+  // Setup user - ✅ SỬA LỖI
+  // ==========================================
+  socket.on("setup", async (userData) => {
+    socket.userId = userData._id;
+    socket.join(userData._id);
+    
+    // Thêm socket vào danh sách user connections
+    if (!onlineUsers.has(userData._id)) {
+      onlineUsers.set(userData._id, new Set());
+      // Chỉ broadcast khi user thực sự online lần đầu
+      socket.broadcast.emit("user online", userData._id);
+    }
+    onlineUsers.get(userData._id).add(socket.id);
+    
+    // Gửi danh sách tất cả users đang online
+    const onlineUserIds = Array.from(onlineUsers.keys());
+    socket.emit("online users", onlineUserIds);
+    
+    socket.emit("connected");
+    
+    console.log(`✅ User ${userData.username} (${userData._id}) connected - Total connections: ${onlineUsers.get(userData._id).size}`);
+  });
 
+  // ==========================================
+  // Disconnect - ✅ SỬA LỖI
+  // ==========================================
+  socket.on("disconnect", async () => {
+    if (socket.userId) {
+      const userSockets = onlineUsers.get(socket.userId);
+      
+      if (userSockets) {
+        userSockets.delete(socket.id);
+        
+        // Chỉ broadcast offline khi user không còn connection nào
+        if (userSockets.size === 0) {
+          onlineUsers.delete(socket.userId);
+          socket.broadcast.emit("user offline", socket.userId);
+          console.log(`❌ User ${socket.userId} disconnected completely`);
+        } else {
+          console.log(`⚠️ User ${socket.userId} still has ${userSockets.size} connection(s)`);
+        }
+      }
+    }
+  });
+
+  // ==========================================
   // Join chat room
-  socket.on('join chat', (chatId) => {
-    socket.join(chatId);
-    console.log(`👥 User ${userId} joined chat ${chatId}`);
+  // ==========================================
+  socket.on("join chat", (room) => {
+    socket.join(room);
+    console.log(`👥 User joined chat room: ${room}`);
   });
 
+  // ==========================================
   // Leave chat room
-  socket.on('leave chat', (chatId) => {
-    socket.leave(chatId);
-    console.log(`🚪 User ${userId} left chat ${chatId}`);
+  // ==========================================
+  socket.on("leave chat", (room) => {
+    socket.leave(room);
+    console.log(`🚪 User left chat room: ${room}`);
   });
 
+  // ==========================================
   // New message
-  socket.on('new message', (message) => {
-    if (!message?.chat?.users) return;
+  // ==========================================
+  socket.on("new message", (newMessageReceived) => {
+    const chat = newMessageReceived.chat;
+    
+    if (!chat.users) {
+      return console.log("❌ chat.users không tồn tại");
+    }
 
-    message.chat.users.forEach(user => {
-      if (user._id === userId) return;
+    console.log(`💬 New message in chat ${chat._id}`);
 
-      socket.to(user._id).emit('message received', message);
-      socket.to(user._id).emit('chat updated', {
-        chatId: message.chat._id,
-        latestMessage: message,
-        updatedAt: message.createdAt
+    chat.users.forEach((user) => {
+      if (user._id === newMessageReceived.sender._id) return;
+      
+      socket.in(user._id).emit("message received", newMessageReceived);
+      
+      socket.in(user._id).emit("chat updated", {
+        chatId: chat._id,
+        latestMessage: newMessageReceived,
+        updatedAt: newMessageReceived.createdAt
       });
     });
   });
 
-  // Typing
-  socket.on('typing', (chatId) => {
-    socket.to(chatId).emit('typing');
+  // ==========================================
+  // Typing indicator
+  // ==========================================
+  socket.on("typing", (room) => {
+    socket.in(room).emit("typing");
   });
 
-  socket.on('stop typing', (chatId) => {
-    socket.to(chatId).emit('stop typing');
-  });
-
-  // Disconnect
-  socket.on('disconnect', () => {
-    socket.broadcast.emit('user offline', userId);
-    console.log(`User disconnected: ${userId}`);
+  socket.on("stop typing", (room) => {
+    socket.in(room).emit("stop typing");
   });
 });
 
-// ==========================
-// GRACEFUL SHUTDOWN
-// ==========================
+// ==========================================
+// Graceful Shutdown
+// ==========================================
 process.on('SIGTERM', () => {
-  console.log('SIGTERM received');
+  console.log('⚠️ SIGTERM signal received: closing HTTP server');
   server.close(() => {
+    console.log('✅ HTTP server closed');
     mongoose.connection.close(false, () => {
-      console.log('✅ Server & MongoDB closed');
+      console.log('✅ MongoDB connection closed');
       process.exit(0);
     });
   });
