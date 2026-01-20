@@ -1,4 +1,6 @@
-const BASE_URL = "http://localhost:3000/api";
+// Detect if running in Docker or local development
+const API_HOST = window.location.hostname === 'localhost' ? 'http://localhost:3000' : `http://${window.location.hostname}:3000`;
+const BASE_URL = `${API_HOST}/api`;
 const token = localStorage.getItem("token");
 const currentUser = JSON.parse(localStorage.getItem("user"));
 let currentChats = [];
@@ -6,7 +8,7 @@ const onlineUsers = new Set();
 let selectedChatId = null;
 let currentRoom = null;
 
-const socket = io("http://localhost:3000", {
+const socket = io(API_HOST, {
     forceNew: true,           // ⭐ Bắt buộc tạo connection mới
     reconnection: true,
     reconnectionDelay: 1000,

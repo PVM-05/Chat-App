@@ -33,7 +33,7 @@ services:
     networks:
       - chat-network
     healthcheck:
-      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      test: ["CMD", "redis-cli", "-a", "redis123", "ping"]
       interval: 10s
       timeout: 3s
       retries: 5
@@ -49,8 +49,9 @@ services:
     restart: unless-stopped
     environment:
       PORT: 3000
+      INSTANCE_NAME: server-1
       ATLAS_URI: mongodb://admin:password123@mongodb:27017/chat?authSource=admin
-      JWT_SECRET: your-super-secret-jwt-key-change-this
+      JWT_SECRET: thangnaodocduoclamotnguoideptrai123
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_PASSWORD: redis123
@@ -79,8 +80,9 @@ services:
     restart: unless-stopped
     environment:
       PORT: 3000
+      INSTANCE_NAME: server-2
       ATLAS_URI: mongodb://admin:password123@mongodb:27017/chat?authSource=admin
-      JWT_SECRET: your-super-secret-jwt-key-change-this
+      JWT_SECRET: thangnaodocduoclamotnguoideptrai123
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_PASSWORD: redis123
@@ -104,8 +106,9 @@ services:
     restart: unless-stopped
     environment:
       PORT: 3000
+      INSTANCE_NAME: server-3
       ATLAS_URI: mongodb://admin:password123@mongodb:27017/chat?authSource=admin
-      JWT_SECRET: your-super-secret-jwt-key-change-this
+      JWT_SECRET: thangnaodocduoclamotnguoideptrai123
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_PASSWORD: redis123
