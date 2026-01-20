@@ -1,0 +1,169 @@
+version: '3.8'
+
+services:
+  # ==========================================
+  # MongoDB Database
+  # ==========================================
+  mongodb:
+    image: mongo:7.0
+    container_name: chat-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - chat-network
+
+  # ==========================================
+  # Redis Cache & PubSub
+  # ==========================================
+  redis:
+    image: redis:7-alpine
+    container_name: chat-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --requirepass redis123
+    volumes:
+      - redis_data:/data
+    networks:
+      - chat-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ==========================================
+  # Backend API Server (Instance 1)
+  # ==========================================
+  backend-1:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: chat-backend-1
+    restart: unless-stopped
+    environment:
+      PORT: 3000
+      ATLAS_URI: mongodb://admin:password123@mongodb:27017/chat?authSource=admin
+      JWT_SECRET: your-super-secret-jwt-key-change-this
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: redis123
+      NODE_ENV: production
+    ports:
+      - "3001:3000"
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - chat-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ==========================================
+  # Backend API Server (Instance 2)
+  # ==========================================
+  backend-2:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: chat-backend-2
+    restart: unless-stopped
+    environment:
+      PORT: 3000
+      ATLAS_URI: mongodb://admin:password123@mongodb:27017/chat?authSource=admin
+      JWT_SECRET: your-super-secret-jwt-key-change-this
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: redis123
+      NODE_ENV: production
+    ports:
+      - "3002:3000"
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - chat-network
+
+  # ==========================================
+  # Backend API Server (Instance 3)
+  # ==========================================
+  backend-3:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: chat-backend-3
+    restart: unless-stopped
+    environment:
+      PORT: 3000
+      ATLAS_URI: mongodb://admin:password123@mongodb:27017/chat?authSource=admin
+      JWT_SECRET: your-super-secret-jwt-key-change-this
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: redis123
+      NODE_ENV: production
+    ports:
+      - "3003:3000"
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - chat-network
+
+  # ==========================================
+  # Nginx Load Balancer
+  # ==========================================
+  nginx-lb:
+    image: nginx:alpine
+    container_name: chat-nginx-lb
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    volumes:
+      - ./nginx-lb.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend-1
+      - backend-2
+      - backend-3
+    networks:
+      - chat-network
+
+  # ==========================================
+  # Frontend Web Server
+  # ==========================================
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: chat-frontend
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    depends_on:
+      - nginx-lb
+    networks:
+      - chat-network
+
+# ==========================================
+# Volumes
+# ==========================================
+volumes:
+  mongodb_data:
+    driver: local
+  redis_data:
+    driver: local
+
+# ==========================================
+# Networks
+# ==========================================
+networks:
+  chat-network:
+    driver: bridge

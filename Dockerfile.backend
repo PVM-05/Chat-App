@@ -1,0 +1,23 @@
+# ==========================================
+# Dockerfile cho Backend Node.js
+# ==========================================
+
+FROM node:20-alpine
+
+# Thiết lập thư mục làm việc
+WORKDIR /app
+
+# Copy package files
+COPY backend/package*.json ./
+
+# Cài đặt dependencies
+RUN npm install
+
+# Copy source code
+COPY backend/ ./
+
+# Expose port
+EXPOSE 3000
+
+# Start command
+CMD ["node", "server.js"]
