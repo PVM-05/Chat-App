@@ -18,9 +18,7 @@ app.use(cors());
 const port = process.env.PORT || 3000;
 const uri = process.env.ATLAS_URI;
 
-// ==========================================
-// Health Check Endpoint
-// ==========================================
+//heath check
 app.get('/health', (req, res) => {
   const instanceName = process.env.INSTANCE_NAME || process.env.HOSTNAME || 'unknown';
   res.status(200).json({ 
@@ -31,23 +29,17 @@ app.get('/health', (req, res) => {
   });
 });
 
-// ==========================================
-// Routes
-// ==========================================
+//route
 app.use('/api/users', userRoute);
 app.use('/api/chats', chatRoute);
 app.use('/api/messages', messageRoute);
 
-// ==========================================
-// Kết nối MongoDB
-// ==========================================
+//database
 mongoose.connect(uri)
   .then(() => console.log(" Kết nối MongoDB thành công"))
   .catch(err => console.error(" Lỗi kết nối MongoDB:", err.message));
 
-// ==========================================
-// Khởi tạo Server & Socket.IO
-// ==========================================
+//tao server va socketIO
 const server = app.listen(port, () => {
   console.log(` Server đang chạy tại cổng ${port}`);
   console.log(` Instance: ${process.env.HOSTNAME || 'local'}`);
@@ -61,9 +53,7 @@ const io = require("socket.io")(server, {
   },
 });
 
-// ==========================================
-// Cấu hình Redis Adapter
-// ==========================================
+// cau hinh redis adapter
 async function setupRedisAdapter() {
   try {
     const redisHost = process.env.REDIS_HOST || 'localhost';
@@ -201,7 +191,7 @@ io.on("connection", (socket) => {
       return console.log(" chat.users không tồn tại");
     }
 
-    console.log(`💬 New message in chat ${chat._id}`);
+    console.log(`Tin nhắn mới ${chat._id}`);
 
     chat.users.forEach((user) => {
       if (String(user._id) === String(newMessageReceived.sender._id)) return;
@@ -232,7 +222,7 @@ io.on("connection", (socket) => {
 // Graceful Shutdown
 // ==========================================
 process.on('SIGTERM', () => {
-  console.log('⚠️ SIGTERM signal received: closing HTTP server');
+  console.log('Nhận tín hiệu sigterm, đóng http');
   server.close(() => {
     console.log(' HTTP server closed');
     mongoose.connection.close(false, () => {

@@ -1,4 +1,4 @@
-// Detect if running in Docker or local development
+
 const API_HOST = window.location.hostname === 'localhost' ? 'http://localhost:3000' : `http://${window.location.hostname}:3000`;
 const BASE_URL = `${API_HOST}/api`;
 const token = localStorage.getItem("token");
@@ -9,7 +9,7 @@ let selectedChatId = null;
 let currentRoom = null;
 
 const socket = io(API_HOST, {
-    forceNew: true,           // ⭐ Bắt buộc tạo connection mới
+    forceNew: true,           //  Bắt buộc tạo connection mới
     reconnection: true,
     reconnectionDelay: 1000,
     reconnectionAttempts: 5,
@@ -23,14 +23,14 @@ function escapeHTML(str) {
   );
 }
 
-/* ================== AUTH ================== */
+//middleware
 if (!token || !currentUser) {
   location.href = "index.html";
 }
 
 socket.emit("setup", currentUser);
 
-/* ================== SOCKET ================== */
+//socket 
 socket.on("message received", (msg) => {
   if (msg.chat._id === selectedChatId) {
     renderMessage(msg);
@@ -44,22 +44,22 @@ socket.on("online users", (users) => {
   onlineUsers.clear();
   users.forEach(id => onlineUsers.add(id));
   updateOnlineStatus();
-  updateAllChatListStatus(); // ✅ Cập nhật status cho tất cả chat trong sidebar
+  updateAllChatListStatus(); //  Cập nhật status cho tất cả chat trong sidebar
 });
 
 socket.on("user online", (userId) => {
   onlineUsers.add(userId);
   updateOnlineStatus();
-  updateSingleChatStatus(userId, true); // ✅ Cập nhật status của 1 user
+  updateSingleChatStatus(userId, true); //  Cập nhật status của 1 user
 });
 
 socket.on("user offline", (userId) => {
   onlineUsers.delete(userId);
   updateOnlineStatus();
-  updateSingleChatStatus(userId, false); // ✅ Cập nhật status của 1 user
+  updateSingleChatStatus(userId, false); //  Cập nhật status của 1 user
 });
 
-/* ================== LOAD CHATS ================== */
+//load chat
 async function loadChats() {
   try {
     const res = await fetch(`${BASE_URL}/chats`, {
@@ -78,7 +78,7 @@ async function loadChats() {
   }
 }
 
-/* ================== RENDER CHAT LIST ================== */
+//tao chat list
 function renderChatList(chats) {
   const list = document.getElementById("chatList");
   list.innerHTML = "";
@@ -89,7 +89,7 @@ function renderChatList(chats) {
   });
 }
 
-/* ================== ✅ CREATE CHAT ITEM ================== */
+//tao chat
 function createChatItem(chat) {
   const name = chat.isGroupChat
     ? chat.chatName
@@ -106,7 +106,7 @@ function createChatItem(chat) {
     ? formatTime(chat.latestMessage.createdAt)
     : "";
 
-  // ✅ Lấy thông tin online status
+  //  Lấy thông tin online status
   let onlineIndicator = "";
   let onlineStatusText = "";
   
@@ -122,7 +122,7 @@ function createChatItem(chat) {
       onlineStatusText = isOnline ? "Đang hoạt động" : "Ngoại tuyến";
     }
   } else {
-    // ✅ Nhóm chat: hiển thị số người online
+    //  Nhóm chat: hiển thị số người online
     const onlineCount = chat.users.filter(u => 
       u._id !== currentUser._id && onlineUsers.has(u._id)
     ).length;
@@ -158,7 +158,7 @@ function createChatItem(chat) {
   return div;
 }
 
-/* ================== ✅ UPDATE ALL CHAT STATUS ================== */
+//cap nhat toan bo
 function updateAllChatListStatus() {
   currentChats.forEach(chat => {
     if (!chat.isGroupChat) {
@@ -185,7 +185,7 @@ function updateAllChatListStatus() {
   });
 }
 
-/* ================== ✅ UPDATE SINGLE CHAT STATUS ================== */
+// cap nhat 1 doan chat
 function updateSingleChatStatus(userId, isOnline) {
   // Tìm chat có user này
   const chat = currentChats.find(c => 
@@ -216,7 +216,7 @@ function updateSingleChatStatus(userId, isOnline) {
   });
 }
 
-/* ================== ✅ UPDATE CHAT ITEM STATUS ================== */
+// trang thai chat
 function updateChatItemStatus(chatId, userId, isOnline) {
   const chatDiv = document.querySelector(`[data-chat-id="${chatId}"]`);
   if (!chatDiv) return;
@@ -235,7 +235,7 @@ function updateChatItemStatus(chatId, userId, isOnline) {
   }
 }
 
-/* ================== REALTIME UPDATE SIDEBAR ================== */
+// sidebar realtime
 function updateChatInSidebar(msg) {
   const chatId = msg.chat._id;
   
@@ -254,7 +254,7 @@ function updateChatInSidebar(msg) {
   }
 }
 
-/* ================== SELECT CHAT ================== */
+//chon doan chat
 async function selectChat(chatId, name) {
   if (currentRoom) socket.emit("leave chat", currentRoom);
   currentRoom = chatId;
@@ -270,7 +270,7 @@ async function selectChat(chatId, name) {
     `<img src="https://ui-avatars.com/api/?name=${escapeHTML(name)}&background=random"
           class="w-full h-full rounded-full">`;
 
-  // ✅ Cập nhật online status trong header
+  // cap nhat online
   updateOnlineStatus();
 
   try {
@@ -303,7 +303,7 @@ async function selectChat(chatId, name) {
   }
 }
 
-/* ================== RENDER MESSAGE ================== */
+//render tin nhan
 function renderMessage(msg) {
   const isMe = msg.sender._id === currentUser._id;
   const box = document.getElementById("messagesContainer");
@@ -424,7 +424,7 @@ function logout() {
   location.href = "index.html";
 }
 
-/* ================== ✅ UPDATE ONLINE STATUS (HEADER) ================== */
+/* ================== UPDATE ONLINE STATUS (HEADER) ================== */
 function updateOnlineStatus() {
   if (!selectedChatId) return;
 
@@ -434,7 +434,7 @@ function updateOnlineStatus() {
   const statusEl = document.getElementById("onlineStatus");
   
   if (chat.isGroupChat) {
-    // ✅ Nhóm: hiển thị danh sách người online
+    // Nhóm: hiển thị danh sách người online
     const onlineMembers = chat.users.filter(u => 
       u._id !== currentUser._id && onlineUsers.has(u._id)
     );
@@ -449,7 +449,7 @@ function updateOnlineStatus() {
       statusEl.className = "text-xs text-gray-400";
     }
   } else {
-    // ✅ Chat 1-1: hiển thị online/offline
+    // Chat 1-1: hiển thị online/offline
     const friend = chat.users.find(u => u._id !== currentUser._id);
     if (!friend) return;
 

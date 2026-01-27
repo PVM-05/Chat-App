@@ -8,38 +8,39 @@ const createToken = (_id) => {
 };
 
 const registerUser = async (req, res) => {
-    try {
-        const { username, email, password } = req.body;
-
-        //Kiểm tra dữ liệu rỗng TRƯỚC (để đỡ tốn công gọi Database)
-        if (!username || !email || !password) return res.status(400).json("Vui lòng điền đủ thông tin!");
-
-        //Kiểm tra user tồn tại
-        let user = await userModel.findOne({ email });
-        
-        if (user) return res.status(400).json("Email này đã được sử dụng!");
-        
-        //Kiểm tra định dạng email
-        if(!validator.isEmail(email)) return res.status(400).json("Chưa đúng định dạng email");
-        // 1 chữ cái thường 1 hoa 1 kí tự đặc biệt 1 số đủ 8 kí tự
-        // if(!validator.isStrongPassword(password)) return res.status(400).json("Mật khẩu chưa đủ mạnh");
-
-        //Mã hóa mật khẩu
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-
-        //Tạo user mới
-        user = new userModel({ username, email, password: hashedPassword });
-        await user.save();
-
-        const token = createToken(user._id);
-        res.status(200).json({ _id: user._id, username, email, token });
-        
-    } catch (error) {
-        console.log(error);
-        res.status(500).json(error);
+    const { username, email, password } = req.body;
+    
+    // Kiểm tra nhập
+    if (!username || !email || !password) {
+        return res.status(400).json("Vui lòng điền đủ thông tin!");
     }
-};
+    
+    // Kiểm tra tên 2
+    if (username.length < 3 || username.length > 30) {
+        return res.status(400).json("Username phải từ 3-30 ký tự");
+    }
+    
+    // Kiểm tra tên 2
+    const usernameRegex = /^[a-zA-Z0-9_]+$/;
+    if (!usernameRegex.test(username)) {
+        return res.status(400).json("Username chỉ được chứa chữ, số và gạch dưới");
+    }
+    
+    // Kiểm ra email
+    if(!validator.isEmail(email)) {
+        return res.status(400).json("Chưa đúng định dạng email");
+    }
+    
+    // Kiểm tra mk
+    if(!validator.isStrongPassword(password)) {
+        return res.status(400).json("Mật khẩu phải có ít nhất 8 ký tự, 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt");
+    }
+    
+    // Kiểm tra trùng
+    let user = await userModel.findOne({ 
+        email: validator.normalizeEmail(email) 
+    });
+}
 
 const loginUser = async (req, res) => {
     const {email, password} = req.body;
@@ -58,7 +59,7 @@ const loginUser = async (req, res) => {
             _id: user._id, 
             username: user.username, 
             email, 
-            avatar: user.avatar, // ✅ THÊM: Trả về avatar
+            avatar: user.avatar, 
             token 
         });
     } catch(error) {
@@ -94,10 +95,9 @@ const getMe = async (req, res) => {
     }
 };
 
-// ✅ SỬA LỖI: Thêm xử lý avatar
 const updateProfile = async (req, res) => {
     try {
-        const { username, email, avatar } = req.body; // ✅ THÊM: avatar
+        const { username, email, avatar } = req.body;
 
         if (!username && !email && !avatar) {
             return res.status(400).json("Không có dữ liệu cập nhật");
@@ -111,7 +111,6 @@ const updateProfile = async (req, res) => {
             }
         }
 
-        // ✅ THÊM: Validate avatar (nếu là URL)
         if (avatar) {
             // Kiểm tra xem có phải URL hợp lệ không
             if (!validator.isURL(avatar, { protocols: ['http', 'https'], require_protocol: true })) {
@@ -122,10 +121,9 @@ const updateProfile = async (req, res) => {
                 }
             }
             
-            // ✅ THÊM: Giới hạn kích thước base64 (khoảng 5MB)
             if (avatar.startsWith('data:image')) {
                 const sizeInBytes = (avatar.length * 3) / 4;
-                const maxSize = 5 * 1024 * 1024; // 5MB
+                const maxSize = 5 * 1024 * 1024; 
                 if (sizeInBytes > maxSize) {
                     return res.status(400).json("Ảnh quá lớn (tối đa 5MB)");
                 }
@@ -136,7 +134,7 @@ const updateProfile = async (req, res) => {
 
         if (username) user.username = username;
         if (email) user.email = email;
-        if (avatar) user.avatar = avatar; // ✅ THÊM: Cập nhật avatar
+        if (avatar) user.avatar = avatar; 
 
         await user.save();
 
@@ -144,7 +142,7 @@ const updateProfile = async (req, res) => {
             _id: user._id,
             username: user.username,
             email: user.email,
-            avatar: user.avatar // ✅ THÊM: Trả về avatar
+            avatar: user.avatar 
         });
     } catch (err) {
         console.error('Update profile error:', err);
