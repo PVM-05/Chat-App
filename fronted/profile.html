@@ -2,58 +2,437 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>Chỉnh sửa thông tin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hồ sơ - Modern Messenger</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <style>
+    @keyframes gradient {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .animate-gradient {
+      background-size: 200% 200%;
+      animation: gradient 5s ease infinite;
+    }
+
+    .glass-effect {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+  </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
 
-<div class="bg-white p-6 rounded-xl shadow w-[360px]">
-  <h2 class="text-xl font-bold text-center mb-4">Thông tin cá nhân</h2>
+<body class="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 animate-gradient p-4 md:p-8">
+  
+  <div class="max-w-4xl mx-auto">
+    
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-8">
+      <button 
+        onclick="location.href='chat-new.html'"
+        class="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-xl transition-all duration-200 backdrop-blur-sm"
+      >
+        <i class="fas fa-arrow-left"></i>
+        <span class="hidden sm:inline">Quay lại</span>
+      </button>
 
-  <!-- Avatar vuông (nút thay đổi ảnh) -->
-  <div class="relative w-32 h-32 mx-auto mb-6 cursor-pointer">
-    <label for="profilePic">
-      <img id="preview" src="https://via.placeholder.com/128?text=User" alt="Ảnh đại diện" class="w-full h-full object-cover rounded-xl shadow-md">
-      <div class="absolute inset-0 bg-black bg-opacity-50 rounded-xl flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-200">
-        <span class="text-white text-sm font-medium">Thay đổi ảnh</span>
+      <h1 class="text-3xl font-bold text-white">Hồ sơ cá nhân</h1>
+
+      <div class="w-24"></div> <!-- Spacer for centering -->
+    </div>
+
+    <!-- Main Content -->
+    <div class="grid md:grid-cols-3 gap-6">
+      
+      <!-- Left Column - Profile Card -->
+      <div class="md:col-span-1">
+        <div class="glass-effect rounded-3xl shadow-2xl p-6">
+          
+          <!-- Avatar Section -->
+          <div class="relative mb-6">
+            <div class="relative mx-auto w-32 h-32 group cursor-pointer">
+              <input type="file" id="profilePic" class="hidden" accept="image/*" onchange="previewImage(event)">
+              <label for="profilePic" class="cursor-pointer">
+                <img 
+                  id="preview" 
+                  src="https://ui-avatars.com/api/?name=User&size=256&background=random" 
+                  alt="Avatar" 
+                  class="w-full h-full object-cover rounded-3xl shadow-xl"
+                >
+                <div class="absolute inset-0 bg-black/50 rounded-3xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200">
+                  <div class="text-center text-white">
+                    <i class="fas fa-camera text-2xl mb-2"></i>
+                    <p class="text-xs font-medium">Thay đổi</p>
+                  </div>
+                </div>
+              </label>
+            </div>
+
+            <!-- Status Indicator -->
+            <div class="absolute bottom-2 right-2 w-6 h-6 bg-green-500 border-4 border-white rounded-full"></div>
+          </div>
+
+          <!-- User Info Preview -->
+          <div class="text-center mb-6">
+            <h2 id="displayUsername" class="text-xl font-bold text-gray-800 mb-1">Đang tải...</h2>
+            <p id="displayEmail" class="text-sm text-gray-600">user@email.com</p>
+          </div>
+
+          <!-- Stats -->
+          <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-4 text-center">
+              <i class="fas fa-comments text-2xl text-blue-600 mb-2"></i>
+              <p class="text-2xl font-bold text-gray-800" id="chatCount">0</p>
+              <p class="text-xs text-gray-600">Cuộc trò chuyện</p>
+            </div>
+            <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-4 text-center">
+              <i class="fas fa-users text-2xl text-purple-600 mb-2"></i>
+              <p class="text-2xl font-bold text-gray-800" id="contactCount">0</p>
+              <p class="text-xs text-gray-600">Liên hệ</p>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="space-y-2">
+            <button class="w-full flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-xl transition-all duration-200 shadow-lg">
+              <i class="fas fa-qrcode"></i>
+              <span class="text-sm font-medium">Mã QR của tôi</span>
+            </button>
+            <button class="w-full flex items-center gap-3 px-4 py-3 bg-white hover:bg-gray-50 text-gray-700 rounded-xl transition-all duration-200 border-2 border-gray-200">
+              <i class="fas fa-shield-alt text-blue-600"></i>
+              <span class="text-sm font-medium">Bảo mật</span>
+            </button>
+          </div>
+
+        </div>
       </div>
-    </label>
-    <input type="file" id="profilePic" class="hidden" accept="image/*">
+
+      <!-- Right Column - Edit Form -->
+      <div class="md:col-span-2">
+        <div class="glass-effect rounded-3xl shadow-2xl p-8">
+          
+          <h3 class="text-2xl font-bold text-gray-800 mb-6">Chỉnh sửa thông tin</h3>
+
+          <form onsubmit="event.preventDefault(); saveProfile()">
+            
+            <!-- Username -->
+            <div class="mb-6">
+              <label class="block text-sm font-semibold text-gray-700 mb-3">
+                <i class="fas fa-user mr-2 text-gray-400"></i>Tên hiển thị
+              </label>
+              <input 
+                id="username" 
+                type="text"
+                class="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200" 
+                placeholder="Nhập tên hiển thị"
+                minlength="3"
+                maxlength="30"
+              >
+              <p class="text-xs text-gray-500 mt-2">Tên này sẽ hiển thị cho mọi người</p>
+            </div>
+
+            <!-- Email -->
+            <div class="mb-6">
+              <label class="block text-sm font-semibold text-gray-700 mb-3">
+                <i class="fas fa-envelope mr-2 text-gray-400"></i>Email
+              </label>
+              <input 
+                id="email" 
+                type="email"
+                class="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200" 
+                placeholder="your@email.com"
+              >
+              <p class="text-xs text-gray-500 mt-2">Email dùng để đăng nhập</p>
+            </div>
+
+            <!-- User ID (Read-only) -->
+            <div class="mb-6">
+              <label class="block text-sm font-semibold text-gray-700 mb-3">
+                <i class="fas fa-fingerprint mr-2 text-gray-400"></i>User ID
+              </label>
+              <div class="flex gap-2">
+                <input 
+                  id="userId" 
+                  type="text"
+                  readonly
+                  class="flex-1 px-4 py-3 bg-gray-100 border-2 border-gray-200 rounded-xl text-gray-600 cursor-not-allowed" 
+                  placeholder="ID của bạn"
+                >
+                <button 
+                  type="button"
+                  onclick="copyUserId()"
+                  class="px-6 py-3 bg-gray-800 hover:bg-gray-900 text-white rounded-xl transition-all duration-200 flex items-center gap-2"
+                  title="Sao chép User ID"
+                >
+                  <i class="fas fa-copy"></i>
+                  <span class="hidden sm:inline">Sao chép</span>
+                </button>
+              </div>
+              <p class="text-xs text-gray-500 mt-2">ID dùng để người khác thêm bạn</p>
+            </div>
+
+            <!-- Bio -->
+            <div class="mb-6">
+              <label class="block text-sm font-semibold text-gray-700 mb-3">
+                <i class="fas fa-info-circle mr-2 text-gray-400"></i>Giới thiệu bản thân
+              </label>
+              <textarea 
+                id="bio"
+                rows="4"
+                class="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 resize-none" 
+                placeholder="Viết vài dòng về bản thân..."
+              ></textarea>
+            </div>
+
+            <!-- Divider -->
+            <div class="flex items-center gap-4 my-8">
+              <div class="flex-1 border-t-2 border-gray-200"></div>
+              <span class="text-sm font-medium text-gray-400">CÀI ĐẶT</span>
+              <div class="flex-1 border-t-2 border-gray-200"></div>
+            </div>
+
+            <!-- Preferences -->
+            <div class="space-y-4 mb-8">
+              
+              <!-- Notifications -->
+              <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                <div class="flex items-center gap-3">
+                  <i class="fas fa-bell text-xl text-purple-600"></i>
+                  <div>
+                    <p class="font-medium text-gray-800">Thông báo</p>
+                    <p class="text-xs text-gray-500">Nhận thông báo tin nhắn mới</p>
+                  </div>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" class="sr-only peer" checked>
+                  <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                </label>
+              </div>
+
+              <!-- Online Status -->
+              <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                <div class="flex items-center gap-3">
+                  <i class="fas fa-circle text-xl text-green-500"></i>
+                  <div>
+                    <p class="font-medium text-gray-800">Trạng thái online</p>
+                    <p class="text-xs text-gray-500">Hiển thị khi bạn đang hoạt động</p>
+                  </div>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" class="sr-only peer" checked>
+                  <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                </label>
+              </div>
+
+              <!-- Read Receipts -->
+              <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                <div class="flex items-center gap-3">
+                  <i class="fas fa-check-double text-xl text-blue-600"></i>
+                  <div>
+                    <p class="font-medium text-gray-800">Xác nhận đã đọc</p>
+                    <p class="text-xs text-gray-500">Cho phép người khác biết bạn đã đọc tin nhắn</p>
+                  </div>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" class="sr-only peer" checked>
+                  <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+              </div>
+
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-3">
+              <button 
+                type="button"
+                onclick="location.href='chat-new.html'"
+                class="flex-1 py-4 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-xl transition-all duration-200"
+              >
+                <i class="fas fa-times mr-2"></i>Hủy
+              </button>
+              <button 
+                type="submit"
+                class="flex-1 py-4 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
+              >
+                <i class="fas fa-save mr-2"></i>Lưu thay đổi
+              </button>
+            </div>
+
+          </form>
+
+        </div>
+      </div>
+
+    </div>
   </div>
 
-  <input id="username" class="w-full border p-2 rounded mb-3" placeholder="Tên hiển thị">
-  <input id="email" class="w-full border p-2 rounded mb-3" placeholder="Email">
+  <!-- Toast Notification -->
+  <div id="toast" class="hidden fixed top-4 right-4 z-50">
+    <div class="bg-white rounded-xl shadow-2xl p-4 flex items-center gap-3 max-w-sm border-2" id="toastContent">
+      <div id="toastIcon" class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"></div>
+      <p id="toastMessage" class="text-sm font-medium text-gray-900"></p>
+    </div>
+  </div>
 
-  <button onclick="saveProfile()"
-          class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
-    Lưu thay đổi
-  </button>
+  <script>
+    const BASE_URL = "http://localhost:3000/api";
+    const token = localStorage.getItem("token");
+    const currentUser = JSON.parse(localStorage.getItem("user"));
 
-  <button onclick="location.href='chat.html'"
-          class="w-full mt-2 text-gray-500 text-sm">
-    Quay lại chat
-  </button>
-</div>
+    if (!token) location.href = "index-new.html";
 
-<script>
-// Preview ảnh khi chọn file
-document.getElementById('profilePic').addEventListener('change', function(event) {
-  if (event.target.files && event.target.files[0]) {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      document.getElementById('preview').src = e.target.result;
+    function showToast(type, message) {
+      const toast = document.getElementById('toast');
+      const icon = document.getElementById('toastIcon');
+      const messageEl = document.getElementById('toastMessage');
+      const content = document.getElementById('toastContent');
+
+      const types = {
+        success: { 
+          bg: 'bg-green-100', 
+          text: 'text-green-600', 
+          icon: 'fa-check-circle',
+          border: 'border-green-500'
+        },
+        error: { 
+          bg: 'bg-red-100', 
+          text: 'text-red-600', 
+          icon: 'fa-times-circle',
+          border: 'border-red-500'
+        }
+      };
+
+      const config = types[type] || types.success;
+      icon.className = `w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${config.bg}`;
+      icon.innerHTML = `<i class="fas ${config.icon} ${config.text}"></i>`;
+      messageEl.textContent = message;
+      content.className = `bg-white rounded-xl shadow-2xl p-4 flex items-center gap-3 max-w-sm border-2 ${config.border}`;
+
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 5000);
     }
-    reader.readAsDataURL(event.target.files[0]);
-  }
-});
 
-// Nếu bạn muốn saveProfile() xử lý file ảnh, thêm logic ở profile.js (ví dụ: FormData với file)
-function saveProfile() {
-  // Ví dụ: const file = document.getElementById('profilePic').files[0];
-  // Gửi lên server nếu cần
-  alert('Đã lưu thay đổi! (Thêm logic gửi file ở profile.js)');
-}
-</script>
+    function previewImage(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          document.getElementById('preview').src = e.target.result;
+        }
+        reader.readAsDataURL(file);
+      }
+    }
 
+    function copyUserId() {
+      const userId = document.getElementById('userId').value;
+      navigator.clipboard.writeText(userId).then(() => {
+        showToast('success', 'Đã sao chép User ID!');
+      });
+    }
+
+    async function loadProfile() {
+      try {
+        const res = await fetch(`${BASE_URL}/users/me`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        const user = await res.json();
+
+        document.getElementById("username").value = user.username;
+        document.getElementById("email").value = user.email;
+        document.getElementById("userId").value = user._id;
+        
+        document.getElementById("displayUsername").textContent = user.username;
+        document.getElementById("displayEmail").textContent = user.email;
+
+        // Update avatar
+        if (user.avatar) {
+          document.getElementById("preview").src = user.avatar;
+        } else {
+          document.getElementById("preview").src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}&size=256&background=random`;
+        }
+
+        // Load chat stats (optional)
+        loadStats();
+      } catch (error) {
+        console.error("Error loading profile:", error);
+        showToast('error', 'Không thể tải thông tin');
+      }
+    }
+
+    async function loadStats() {
+      try {
+        const res = await fetch(`${BASE_URL}/chats`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const chats = await res.json();
+        
+        document.getElementById("chatCount").textContent = chats.length;
+        
+        // Count unique contacts
+        const contacts = new Set();
+        chats.forEach(chat => {
+          chat.users.forEach(user => {
+            if (user._id !== currentUser._id) {
+              contacts.add(user._id);
+            }
+          });
+        });
+        document.getElementById("contactCount").textContent = contacts.size;
+      } catch (error) {
+        console.error("Error loading stats:", error);
+      }
+    }
+
+    async function saveProfile() {
+      const username = document.getElementById("username").value.trim();
+      const email = document.getElementById("email").value.trim();
+
+      if (!username || !email) {
+        showToast('error', 'Vui lòng điền đầy đủ thông tin');
+        return;
+      }
+
+      try {
+        const res = await fetch(`${BASE_URL}/users/profile`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ username, email })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          showToast('error', typeof data === 'string' ? data : 'Cập nhật thất bại');
+          return;
+        }
+
+        // Update localStorage
+        const current = JSON.parse(localStorage.getItem("user"));
+        localStorage.setItem("user", JSON.stringify({ ...current, ...data }));
+
+        // Update display
+        document.getElementById("displayUsername").textContent = data.username;
+        document.getElementById("displayEmail").textContent = data.email;
+        document.getElementById("preview").src = `https://ui-avatars.com/api/?name=${encodeURIComponent(data.username)}&size=256&background=random`;
+
+        showToast('success', 'Cập nhật thành công!');
+      } catch (error) {
+        console.error("Error saving profile:", error);
+        showToast('error', 'Có lỗi xảy ra');
+      }
+    }
+
+    // Initialize
+    loadProfile();
+  </script>
 </body>
 </html>

@@ -170,7 +170,7 @@ io.on("connection", (socket) => {
   // ==========================================
   socket.on("join chat", (room) => {
     socket.join(room);
-    console.log(`👥 User joined chat room: ${room}`);
+    console.log(` User joined chat room: ${room}`);
   });
 
   // ==========================================
@@ -178,7 +178,7 @@ io.on("connection", (socket) => {
   // ==========================================
   socket.on("leave chat", (room) => {
     socket.leave(room);
-    console.log(`🚪 User left chat room: ${room}`);
+    console.log(`User left chat room: ${room}`);
   });
 
   // ==========================================
