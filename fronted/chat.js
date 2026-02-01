@@ -1,6 +1,6 @@
 const BASE_URL = "http://localhost:3000/api";
-const token = localStorage.getItem("token");
-const currentUser = JSON.parse(localStorage.getItem("user"));
+const token = sessionStorage.getItem("token");
+const currentUser = JSON.parse(sessionStorage.getItem("user"));
 let currentChats = [];
 const onlineUsers = new Set();
 let selectedChatId = null;
@@ -28,14 +28,14 @@ socket.emit("setup", currentUser);
 function toggleDarkMode() {
   document.documentElement.classList.toggle('dark');
   const isDark = document.documentElement.classList.contains('dark');
-  localStorage.setItem('darkMode', isDark ? 'dark' : 'light');
+  sessionStorage.setItem('darkMode', isDark ? 'dark' : 'light');
   
   const icon = document.getElementById('darkModeIcon');
   icon.className = isDark ? 'fas fa-sun text-yellow-400' : 'fas fa-moon text-gray-600';
 }
 
-// Initialize dark mode from localStorage
-if (localStorage.getItem('darkMode') === 'dark') {
+// Initialize dark mode from sessionStorage
+if (sessionStorage.getItem('darkMode') === 'dark') {
   document.documentElement.classList.add('dark');
   document.getElementById('darkModeIcon').className = 'fas fa-sun text-yellow-400';
 }
@@ -732,7 +732,7 @@ async function submitGroupChat() {
 function logout() {
   if (confirm('Bạn có chắc muốn đăng xuất?')) {
     socket.disconnect();
-    localStorage.clear();
+    sessionStorage.clear();
     location.href = "index.html";
   }
 }

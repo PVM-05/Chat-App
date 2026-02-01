@@ -1,22 +1,157 @@
-version: '3.8'
-
 services:
-  # MongoDB Database
-  mongodb:
+  # MongoDB Primary
+  mongo-primary:
     image: mongo:7.0
-    container_name: chat-mongodb
+    container_name: chat-mongo-primary
     restart: unless-stopped
+    entrypoint:
+      - bash
+      - -c
+      - |
+        echo ">> CHECK 1: Listing mounted folder..."
+        ls -la /opt/keyfile/
+        
+        echo ">> CHECK 2: Copying keyfile..."
+        if [ ! -f /opt/keyfile/mongo-keyfile ]; then
+            echo "ERROR: File không tồn tại! Hãy tạo folder 'config' và để file 'mongo-keyfile' vào đó."
+            exit 1
+        fi
+        
+        cp /opt/keyfile/mongo-keyfile /tmp/mongo-keyfile
+        
+        echo ">> CHECK 3: Setting permissions..."
+        chown 999:999 /tmp/mongo-keyfile
+        chmod 400 /tmp/mongo-keyfile
+        
+        echo ">> CHECK 4: Starting MongoDB..."
+        exec docker-entrypoint.sh mongod --replSet myReplicaSet --bind_ip_all --keyFile /tmp/mongo-keyfile
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: password123
     ports:
       - "27017:27017"
     volumes:
-      - mongodb_data:/data/db
+      - mongo-primary-data:/data/db
+      - ./config:/opt/keyfile:ro
+    networks:
+      - chat-network
+    # --- PHẦN QUAN TRỌNG BỊ THIẾU ---
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # --------------------------------
+
+  # MongoDB Secondary 1
+  mongo-secondary-1:
+    image: mongo:7.0
+    container_name: chat-mongo-secondary-1
+    restart: unless-stopped
+    entrypoint:
+      - bash
+      - -c
+      - |
+        cp /opt/keyfile/mongo-keyfile /tmp/mongo-keyfile
+        chown 999:999 /tmp/mongo-keyfile
+        chmod 400 /tmp/mongo-keyfile
+        exec docker-entrypoint.sh mongod --replSet myReplicaSet --bind_ip_all --keyFile /tmp/mongo-keyfile
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+    volumes:
+      - mongo-secondary1-data:/data/db
+      - ./config:/opt/keyfile:ro
+    networks:
+      - chat-network
+    depends_on:
+      mongo-primary:
+        condition: service_healthy
+
+  # MongoDB Secondary 2
+  mongo-secondary-2:
+    image: mongo:7.0
+    container_name: chat-mongo-secondary-2
+    restart: unless-stopped
+    entrypoint:
+      - bash
+      - -c
+      - |
+        cp /opt/keyfile/mongo-keyfile /tmp/mongo-keyfile
+        chown 999:999 /tmp/mongo-keyfile
+        chmod 400 /tmp/mongo-keyfile
+        exec docker-entrypoint.sh mongod --replSet myReplicaSet --bind_ip_all --keyFile /tmp/mongo-keyfile
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+    volumes:
+      - mongo-secondary2-data:/data/db
+      - ./config:/opt/keyfile:ro
+    networks:
+      - chat-network
+    depends_on:
+      mongo-primary:
+        condition: service_healthy
+
+  # Init Replica Set
+  # Init Replica Set (Đã nâng cấp: Chờ đủ cả 3 node)
+  mongo-init:
+    image: mongo:7.0
+    container_name: chat-mongo-init
+    depends_on:
+      mongo-primary:
+        condition: service_healthy
+      mongo-secondary-1:
+        condition: service_started
+      mongo-secondary-2:
+        condition: service_started
+    entrypoint:
+      - bash
+      - -c
+      - |
+        # Hàm chờ một host cụ thể
+        wait_for_mongo() {
+          echo "Waiting for $1 to be ready..."
+          until mongosh --host $1 --port 27017 --eval "quit(0)" > /dev/null 2>&1; do
+            echo "$1 is not ready yet. Sleeping 2s..."
+            sleep 2
+          done
+          echo "$1 is READY!"
+        }
+
+        # Chờ lần lượt cả 3 node
+        wait_for_mongo "mongo-primary"
+        wait_for_mongo "mongo-secondary-1"
+        wait_for_mongo "mongo-secondary-2"
+        
+        echo ">> ALL NODES ARE READY! Starting Replica Set initialization..."
+        
+        # Khởi tạo Replica Set
+        mongosh --host mongo-primary -u admin -p password123 --authenticationDatabase admin --eval "
+        try {
+          var status = rs.status();
+          if (status.ok === 1) {
+            print('Replica Set already initialized. Skipping.');
+          } else {
+             throw 'Not initialized';
+          }
+        } catch (err) {
+          print('Initializing Replica Set...');
+          var cfg = {
+            _id: 'myReplicaSet',
+            members: [
+              { _id: 0, host: 'mongo-primary:27017', priority: 2 },
+              { _id: 1, host: 'mongo-secondary-1:27017', priority: 1 },
+              { _id: 2, host: 'mongo-secondary-2:27017', priority: 1 }
+            ]
+          };
+          var res = rs.initiate(cfg);
+          printjson(res);
+        }"
     networks:
       - chat-network
 
-  # Redis Cache & PubSub
+  # Redis
   redis:
     image: redis:7-alpine
     container_name: chat-redis
@@ -34,7 +169,7 @@ services:
       timeout: 3s
       retries: 5
 
-  # Backend API Server (Instance 1)
+  # Backend Server 1
   backend-1:
     build:
       context: .
@@ -44,7 +179,7 @@ services:
     environment:
       PORT: 3000
       INSTANCE_NAME: server-1
-      ATLAS_URI: mongodb://admin:password123@mongodb:27017/chat?authSource=admin
+      ATLAS_URI: mongodb://admin:password123@mongo-primary:27017,mongo-secondary-1:27017,mongo-secondary-2:27017/chat?authSource=admin&replicaSet=myReplicaSet&retryWrites=true
       JWT_SECRET: thangnaodocduoclamotnguoideptrai123
       REDIS_HOST: redis
       REDIS_PORT: 6379
@@ -53,8 +188,10 @@ services:
     ports:
       - "3001:3000"
     depends_on:
-      - mongodb
-      - redis
+      mongo-primary:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - chat-network
     healthcheck:
@@ -63,7 +200,7 @@ services:
       timeout: 10s
       retries: 3
 
-  # Backend API Server (Instance 2)
+  # Backend Server 2
   backend-2:
     build:
       context: .
@@ -73,7 +210,7 @@ services:
     environment:
       PORT: 3000
       INSTANCE_NAME: server-2
-      ATLAS_URI: mongodb://admin:password123@mongodb:27017/chat?authSource=admin
+      ATLAS_URI: mongodb://admin:password123@mongo-primary:27017,mongo-secondary-1:27017,mongo-secondary-2:27017/chat?authSource=admin&replicaSet=myReplicaSet&retryWrites=true
       JWT_SECRET: thangnaodocduoclamotnguoideptrai123
       REDIS_HOST: redis
       REDIS_PORT: 6379
@@ -82,12 +219,14 @@ services:
     ports:
       - "3002:3000"
     depends_on:
-      - mongodb
-      - redis
+      mongo-primary:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - chat-network
 
-  # Backend API Server (Instance 3)
+  # Backend Server 3
   backend-3:
     build:
       context: .
@@ -97,7 +236,7 @@ services:
     environment:
       PORT: 3000
       INSTANCE_NAME: server-3
-      ATLAS_URI: mongodb://admin:password123@mongodb:27017/chat?authSource=admin
+      ATLAS_URI: mongodb://admin:password123@mongo-primary:27017,mongo-secondary-1:27017,mongo-secondary-2:27017/chat?authSource=admin&replicaSet=myReplicaSet&retryWrites=true
       JWT_SECRET: thangnaodocduoclamotnguoideptrai123
       REDIS_HOST: redis
       REDIS_PORT: 6379
@@ -106,8 +245,10 @@ services:
     ports:
       - "3003:3000"
     depends_on:
-      - mongodb
-      - redis
+      mongo-primary:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - chat-network
 
@@ -136,19 +277,23 @@ services:
     restart: unless-stopped
     ports:
       - "8080:80"
+    volumes:
+      - ./fronted:/usr/share/nginx/html
     depends_on:
       - nginx-lb
     networks:
       - chat-network
 
-# Volumes
 volumes:
-  mongodb_data:
+  mongo-primary-data:
+    driver: local
+  mongo-secondary1-data:
+    driver: local
+  mongo-secondary2-data:
     driver: local
   redis_data:
     driver: local
 
-# Networks
 networks:
   chat-network:
     driver: bridge

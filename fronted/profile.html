@@ -281,8 +281,8 @@
 
   <script>
     const BASE_URL = "http://localhost:3000/api";
-    const token = localStorage.getItem("token");
-    const currentUser = JSON.parse(localStorage.getItem("user"));
+    const token = sessionStorage.getItem("token");
+    const currentUser = JSON.parse(sessionStorage.getItem("user"));
 
     if (!token) location.href = "index.html";
 
@@ -415,9 +415,9 @@
           return;
         }
 
-        // Update localStorage
-        const current = JSON.parse(localStorage.getItem("user"));
-        localStorage.setItem("user", JSON.stringify({ ...current, ...data }));
+        // Update sessionStorage
+        const current = JSON.parse(sessionStorage.getItem("user"));
+        sessionStorage.setItem("user", JSON.stringify({ ...current, ...data }));
 
         // Update display
         document.getElementById("displayUsername").textContent = data.username;

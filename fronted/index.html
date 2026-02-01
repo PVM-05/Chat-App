@@ -228,8 +228,8 @@
                 const data = await res.json();
                 
                 if (res.ok) {
-                    localStorage.setItem('token', data.token);
-                    localStorage.setItem('user', JSON.stringify(data));
+                    sessionStorage.setItem('token', data.token);
+                    sessionStorage.setItem('user', JSON.stringify(data));
                     showToast('success', 'Đăng nhập thành công!');
                     setTimeout(() => {
                         window.location.href = 'chat.html';

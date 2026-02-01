@@ -1,5 +1,5 @@
 const BASE_URL = "http://localhost:3000/api";
-const token = localStorage.getItem("token");
+const token = sessionStorage.getItem("token");
 
 if (!token) location.href = "index.html";
 
@@ -94,9 +94,9 @@ async function saveProfile() {
       return;
     }
 
-    // ✅ THÊM: Update localStorage với thông tin mới
-    const current = JSON.parse(localStorage.getItem("user"));
-    localStorage.setItem("user", JSON.stringify({ 
+    // ✅ THÊM: Update sessionStorage với thông tin mới
+    const current = JSON.parse(sessionStorage.getItem("user"));
+    sessionStorage.setItem("user", JSON.stringify({ 
       ...current, 
       ...data 
     }));
