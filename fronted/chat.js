@@ -92,6 +92,23 @@ socket.on("connect", () => {
   }
 });
 
+socket.on("chat created", (newChat) => {
+  // Kiểm tra xem chat đã tồn tại chưa để tránh trùng lặp
+  const exists = currentChats.some(c => c._id === newChat._id);
+  if (exists) return;
+
+  // Thêm chat mới lên đầu danh sách và render lại
+  currentChats.unshift(newChat);
+  renderChatList(currentChats);
+  
+  // Hiển thị thông báo nhỏ
+  const chatName = newChat.isGroupChat 
+    ? newChat.chatName 
+    : newChat.users.find(u => u._id !== currentUser._id)?.username;
+    
+  showNotification('info', `Cuộc trò chuyện mới: ${chatName}`);
+});
+
 /*UTILITY FUNCTIONS*/
 function escapeHTML(str) {
   if (!str) return '';
@@ -664,10 +681,15 @@ async function createChatWithUser(userId) {
     });
     
     if (!res.ok) throw new Error("Không thể tạo chat");
+    const chat = await res.json(); 
+    
+    //Phát tín hiệu Socket báo cho server
+    socket.emit("new chat", chat);
     
     closeAddUserModal();
     showNotification('success', 'Đã tạo cuộc trò chuyện mới');
     loadChats();
+
   } catch (error) {
     console.error("Lỗi tạo chat:", error);
     showNotification('error', 'Có lỗi khi tạo chat mới');
@@ -726,6 +748,10 @@ async function submitGroupChat() {
     });
     
     if (!res.ok) throw new Error("Không thể tạo nhóm");
+    const groupChat = await res.json(); 
+
+    //Phát tín hiệu Socket báo cho server
+    socket.emit("new chat", groupChat);
     
     closeGroupModal();
     showNotification('success', 'Đã tạo nhóm chat thành công');

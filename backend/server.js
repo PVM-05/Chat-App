@@ -46,7 +46,8 @@ const server = app.listen(port, () => {
 });
 
 const io = require("socket.io")(server, {
-  pingTimeout: 60000,
+  pingTimeout: 5000,    
+  pingInterval: 10000,
   cors: {
     origin: "*",
     methods: ["GET", "POST"]
@@ -117,7 +118,7 @@ setupRedisAdapter();
 const onlineUsers = new Map();
 
 io.on("connection", (socket) => {
-  console.log(`🔌 Socket.io connected: ${socket.id}`);
+  console.log(`Socket.io đã kết nối: ${socket.id}`);
 
   // ==========================================
   // Setup user 
@@ -206,9 +207,23 @@ io.on("connection", (socket) => {
     });
   });
 
-  // ==========================================
+  socket.on("new chat", (newChat) => {
+    console.log("User created new chat", newChat._id);
+    
+    if (!newChat.users) return console.log("Chat.users not defined");
+
+    newChat.users.forEach((user) => {
+      // Không gửi lại cho chính người tạo 
+      if (String(user._id) === String(socket.userId)) return; 
+      
+      // Gửi sự kiện cho các thành viên khác trong nhóm/chat
+      socket.in(String(user._id)).emit("chat created", newChat);
+    });
+  });
+
+
   // Typing indicator
-  // ==========================================
+
   socket.on("typing", (room) => {
     socket.in(room).emit("typing");
   });
@@ -218,9 +233,9 @@ io.on("connection", (socket) => {
   });
 });
 
-// ==========================================
+
 // Graceful Shutdown
-// ==========================================
+
 process.on('SIGTERM', () => {
   console.log('Nhận tín hiệu sigterm, đóng http');
   server.close(() => {
