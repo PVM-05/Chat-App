@@ -8,7 +8,7 @@ const createToken = (_id) => {
     return jwt.sign({ _id }, process.env.JWT_SECRET, { expiresIn: "3d" });
 };
 
-// ================= REGISTER (ĐÃ SỬA LỖI THIẾU CODE) =================
+//REGISTER 
 const registerUser = async (req, res) => {
     try {
         const { username, email, password } = req.body;
@@ -36,21 +36,21 @@ const registerUser = async (req, res) => {
             return res.status(400).json("Mật khẩu phải có ít nhất 8 ký tự, 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt");
         }
         
-        // 3. Kiểm tra user tồn tại
+        //Kiểm tra user tồn tại
         let user = await userModel.findOne({ email });
         if (user) return res.status(400).json("Email này đã được sử dụng");
 
-        // 4. Tạo user mới
+        //Tạo user mới
         user = new userModel({ username, email, password });
 
-        // 5. Mã hóa mật khẩu
+        //Mã hóa mật khẩu
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(user.password, salt);
 
-        // 6. Lưu vào DB
+        //Lưu vào DB
         await user.save();
 
-        // 7. Tạo token và phản hồi
+        //Tạo token và phản hồi
         const token = createToken(user._id);
         res.status(200).json({ 
             _id: user._id, 
@@ -65,7 +65,7 @@ const registerUser = async (req, res) => {
     }
 }
 
-// ================= LOGIN =================
+//LOGIN 
 const loginUser = async (req, res) => {
     const {email, password} = req.body;
     try {
@@ -92,11 +92,11 @@ const loginUser = async (req, res) => {
     };
 };
 
-// ================= FIND USER =================
+//Tìm
 const findUser = async (req, res) => {
     const userId = req.params.userId;
     try {
-        const user = await userModel.findById(userId).select("-password"); // Nên ẩn password
+        const user = await userModel.findById(userId).select("-password"); 
         if (!user) {
           return res.status(404).json("Không tìm thấy người dùng!");
         }
@@ -108,7 +108,41 @@ const findUser = async (req, res) => {
     }
 }
 
-// ================= GET ME =================
+//Search
+const searchUsers = async (req, res) => {
+    try {
+        const query = req.query.q;
+
+        //min 2 ký tự
+        if (!query || query.trim().length < 2) {
+            return res.status(400).json({ message: "Nhập ít nhất 2 ký tự để tìm kiếm" });
+        }
+
+        const keyword = query.trim();
+
+    
+        const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(escapedKeyword, "i");
+
+        // Tìm theo username hoặc email, loại trừ chính mình
+        const users = await userModel.find({
+            _id: { $ne: req.user._id },           // Không return chính mình
+            $or: [
+                { username: regex },               // Match username
+                { email: regex }                   // Match email
+            ]
+        })
+        .select("-password")                       // Không return password
+        .limit(20);                                // Max 20 kết quả
+
+        res.status(200).json(users);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Lỗi khi tìm kiếm" });
+    }
+};
+
+//GET ME
 const getMe = async (req, res) => {
     try {
         // req.user được gán từ middleware auth
@@ -119,7 +153,7 @@ const getMe = async (req, res) => {
     }
 };
 
-// ================= UPDATE PROFILE =================
+//UPDATE PROFILE
 const updateProfile = async (req, res) => {
     try {
         const { username, email, avatar } = req.body;
@@ -128,7 +162,7 @@ const updateProfile = async (req, res) => {
             return res.status(400).json("Không có dữ liệu cập nhật");
         }
 
-        // Kiểm tra email trùng (nếu đổi email)
+        // Kiểm tra email trùng
         if (email) {
             const exists = await userModel.findOne({ email });
             if (exists && exists._id.toString() !== req.user._id.toString()) {
@@ -136,7 +170,6 @@ const updateProfile = async (req, res) => {
             }
         }
 
-        // (Giữ nguyên logic kiểm tra avatar của bạn ở đây...)
         if (avatar && avatar.startsWith('data:image')) {
              const sizeInBytes = (avatar.length * 3) / 4;
              if (sizeInBytes > 5 * 1024 * 1024) return res.status(400).json("Ảnh quá lớn");
@@ -156,7 +189,7 @@ const updateProfile = async (req, res) => {
             avatar: user.avatar 
         });
     } catch (err) {
-        console.error('Update profile error:', err);
+        console.error('Cập nhập profile thất bại:', err);
         res.status(500).json(err);
     }
 };
@@ -164,4 +197,4 @@ const updateProfile = async (req, res) => {
 
 
 
-module.exports = { registerUser, loginUser, findUser, getMe, updateProfile,};
+module.exports = { registerUser, loginUser, findUser,searchUsers, getMe, updateProfile,};

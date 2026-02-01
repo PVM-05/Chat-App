@@ -6,7 +6,7 @@ const onlineUsers = new Set();
 let selectedChatId = null;
 let currentRoom = null;
 let typingTimeout = null;
-let allUsers = []; // Cache for user search
+let allUsers = []; 
 
 // Socket.IO Connection
 const socket = io("http://localhost:3000", {
@@ -17,14 +17,14 @@ const socket = io("http://localhost:3000", {
   transports: ['websocket', 'polling']
 });
 
-/* ================== INITIALIZATION ================== */
+/*INITIALIZATION */
 if (!token || !currentUser) {
   location.href = "index.html";
 }
 
 socket.emit("setup", currentUser);
 
-/* ================== DARK MODE ================== */
+/* DARK MODE*/
 function toggleDarkMode() {
   document.documentElement.classList.toggle('dark');
   const isDark = document.documentElement.classList.contains('dark');
@@ -34,20 +34,20 @@ function toggleDarkMode() {
   icon.className = isDark ? 'fas fa-sun text-yellow-400' : 'fas fa-moon text-gray-600';
 }
 
-// Initialize dark mode from sessionStorage
+//
 if (sessionStorage.getItem('darkMode') === 'dark') {
   document.documentElement.classList.add('dark');
   document.getElementById('darkModeIcon').className = 'fas fa-sun text-yellow-400';
 }
 
-/* ================== SOCKET EVENTS ================== */
+/*SOCKET EVENTS*/
 socket.on("message received", (msg) => {
   if (msg.chat._id === selectedChatId) {
     renderMessage(msg);
     updateSeenStatus([msg]);
     scrollToBottom();
   } else {
-    // Show notification for new message
+    //thongbao
     showNotification('info', `Tin nhắn mới từ ${msg.sender.username}`);
   }
   updateChatInSidebar(msg);
@@ -92,7 +92,7 @@ socket.on("connect", () => {
   }
 });
 
-/* ================== UTILITY FUNCTIONS ================== */
+/*UTILITY FUNCTIONS*/
 function escapeHTML(str) {
   if (!str) return '';
   return String(str).replace(/[&<>"']/g, m =>
@@ -150,7 +150,7 @@ function closeToast() {
   document.getElementById("notificationToast").classList.add("hidden");
 }
 
-/* ================== CHAT LIST FUNCTIONS ================== */
+/*CHAT LIST FUNCTIONS*/
 async function loadChats() {
   try {
     const res = await fetch(`${BASE_URL}/chats`, {
@@ -333,7 +333,7 @@ function filterChats(query) {
   renderChatList(filtered);
 }
 
-/* ================== SELECT CHAT ================== */
+/*SELECT CHAT*/
 async function selectChat(chatId, name) {
   if (currentRoom) socket.emit("leave chat", currentRoom);
   currentRoom = chatId;
@@ -435,7 +435,7 @@ function closeMobileChat() {
   selectedChatId = null;
 }
 
-/* ================== MESSAGES ================== */
+/*MESSAGES*/
 function renderMessage(msg) {
   const isMe = msg.sender._id === currentUser._id;
   const box = document.getElementById("messagesContainer");
@@ -538,7 +538,7 @@ function updateSeenStatus(messages) {
   document.getElementById("seenStatus").classList.toggle("hidden", !seen);
 }
 
-/* ================== ADD USER MODAL ================== */
+/*ADD USER MODAL*/
 function openAddUserModal() {
   document.getElementById("addUserModal").classList.remove("hidden");
   document.getElementById("userSearchInput").focus();
@@ -556,9 +556,15 @@ function closeAddUserModal() {
   `;
 }
 
+let searchDebounceTimer = null;
+
 async function searchUsers(query) {
   query = query.trim();
-  
+
+  // Reset debounce timer mỗi lần gọi
+  clearTimeout(searchDebounceTimer);
+
+  // Nếu query rỗng hoặc < 2 ký tự → reset UI
   if (query.length < 2) {
     document.getElementById("userSearchResults").innerHTML = `
       <div class="text-center py-8 text-gray-400 dark:text-gray-500">
@@ -569,36 +575,37 @@ async function searchUsers(query) {
     return;
   }
 
-  // Show loading
-  document.getElementById("userSearchResults").innerHTML = `
-    <div class="text-center py-8 text-gray-400 dark:text-gray-500">
-      <i class="fas fa-spinner fa-spin text-4xl mb-3"></i>
-      <p class="text-sm">Đang tìm kiếm...</p>
-    </div>
-  `;
+  // Debounce 400ms: chỉ gọi API sau khi user dừng gõ 400ms
+  // Tránh spam request mỗi ký tự
+  searchDebounceTimer = setTimeout(async () => {
+    // Show loading
+    document.getElementById("userSearchResults").innerHTML = `
+      <div class="text-center py-8 text-gray-400 dark:text-gray-500">
+        <i class="fas fa-spinner fa-spin text-4xl mb-3"></i>
+        <p class="text-sm">Đang tìm kiếm...</p>
+      </div>
+    `;
 
-  try {
-    // In a real app, you'd have a search API endpoint
-    // For now, we'll simulate with existing users from chats
-    const searchResults = [];
-    
-    currentChats.forEach(chat => {
-      chat.users.forEach(user => {
-        if (user._id !== currentUser._id && 
-            (user.username.toLowerCase().includes(query.toLowerCase()) ||
-             user.email.toLowerCase().includes(query.toLowerCase()))) {
-          if (!searchResults.find(u => u._id === user._id)) {
-            searchResults.push(user);
-          }
-        }
+    try {
+      // Gọi API search thật — tìm trong toàn bộ database
+      const res = await fetch(`${BASE_URL}/users/search?q=${encodeURIComponent(query)}`, {
+        headers: { Authorization: `Bearer ${token}` }
       });
-    });
 
-    displaySearchResults(searchResults);
-  } catch (error) {
-    console.error("Search error:", error);
-    showNotification('error', 'Có lỗi khi tìm kiếm');
-  }
+      if (!res.ok) {
+        const err = await res.json();
+        showNotification('error', err.message || 'Lỗi tìm kiếm');
+        return;
+      }
+
+      const users = await res.json();
+      displaySearchResults(users);
+
+    } catch (error) {
+      console.error("Search error:", error);
+      showNotification('error', 'Có lỗi khi tìm kiếm');
+    }
+  }, 400);
 }
 
 function displaySearchResults(users) {
@@ -619,12 +626,13 @@ function displaySearchResults(users) {
     const div = document.createElement("div");
     div.className = "flex items-center gap-3 p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-all duration-200";
     
-    const colors = ['blue', 'purple', 'pink', 'green', 'indigo'];
-    const color = colors[Math.floor(Math.random() * colors.length)];
-    
+    const firstLetter = (user.username && user.username.length > 0)
+      ? user.username.charAt(0).toUpperCase()
+      : "U";
+
     div.innerHTML = `
-      <div class="w-12 h-12 rounded-full bg-gradient-to-br from-${color}-400 to-${color}-600 flex items-center justify-center text-white font-semibold shadow-md flex-shrink-0">
-        ${user.username.charAt(0).toUpperCase()}
+      <div class="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white font-semibold shadow-md flex-shrink-0">
+        ${escapeHTML(firstLetter)}
       </div>
       <div class="flex-1 min-w-0">
         <p class="font-semibold text-gray-900 dark:text-gray-100 truncate">${escapeHTML(user.username)}</p>
@@ -676,7 +684,7 @@ async function createChatById() {
   await createChatWithUser(userId);
 }
 
-/* ================== GROUP MODAL ================== */
+/*GROUP MODAL*/
 function openGroupModal() {
   document.getElementById("groupModal").classList.remove("hidden");
   document.getElementById("groupName").focus();
@@ -728,7 +736,7 @@ async function submitGroupChat() {
   }
 }
 
-/* ================== LOGOUT ================== */
+/*LOGOUT */
 function logout() {
   if (confirm('Bạn có chắc muốn đăng xuất?')) {
     socket.disconnect();
@@ -737,6 +745,6 @@ function logout() {
   }
 }
 
-/* ================== INIT ================== */
+/*INIT */
 loadChats();
 updateOnlineStatus();

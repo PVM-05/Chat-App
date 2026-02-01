@@ -1,7 +1,7 @@
 const Chat = require("../models/chatModel");
 const User = require("../models/userModel");
 
-// 1. Tạo hoặc lấy đoạn chat 1-1
+//Tạo hoặc lấy đoạn chat 1-1
 const accessChat = async (req, res) => {
   const { userId } = req.body; // ID người muốn chat cùng
 
@@ -11,7 +11,7 @@ const accessChat = async (req, res) => {
     isGroupChat: false,
     $and: [
       { users: { $elemMatch: { $eq: req.user._id } } }, // Bạn
-      { users: { $elemMatch: { $eq: userId } } },       // Người kia
+      { users: { $elemMatch: { $eq: userId } } },       // Người khác
     ],
   })
     .populate("users", "-password")
@@ -44,7 +44,7 @@ const accessChat = async (req, res) => {
   }
 };
 
-// 2. Lấy danh sách tất cả các đoạn chat
+//Lấy danh sách tất cả các đoạn chat
 const fetchChats = async (req, res) => {
   try {
     Chat.find({ users: { $elemMatch: { $eq: req.user._id } } })
@@ -65,18 +65,17 @@ const fetchChats = async (req, res) => {
 };
 
 const createGroupChat = async (req, res) => {
-    // Client phải gửi lên: { users: "[id1, id2]", name: "Tên nhóm" }
     if (!req.body.users || !req.body.name) {
       return res.status(400).send({ message: "Vui lòng điền tên nhóm và thêm thành viên" });
     }
   
-    var users = JSON.parse(req.body.users); // Chuyển chuỗi JSON thành mảng
+    var users = JSON.parse(req.body.users); //Chuyển chuỗi JSON thành mảng
   
     if (users.length < 2) {
       return res.status(400).send("Nhóm cần ít nhất 2 thành viên (cộng thêm bạn là 3)");
     }
   
-    users.push(req.user._id); // Thêm chính người tạo (admin) vào nhóm
+    users.push(req.user._id); //Thêm chính người tạo vào nhóm
   
     try {
       const groupChat = await Chat.create({
